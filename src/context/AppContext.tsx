@@ -70,7 +70,7 @@ const DEMO_CUSTOMER: User = {
   name: 'Sarah Johnson',
   email: 'sarah@email.com',
   phone: '+1 555 123 4567',
-  role: 'customer',
+  role: 'admin',
 }
 
 export function AppProvider({ children }: { children: ReactNode }) {
