@@ -56,3 +56,4 @@ Thumbs.db
 
 # Figma Make App (إذا كان هناك أي ملفات متبقية من الإعداد القديم)
 .figma/
+.admin/
