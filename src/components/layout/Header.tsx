@@ -5,7 +5,7 @@ import { useApp } from '../../context/AppContext'
 import logoImg from '../../imports/image.png'
 
 export function Header() {
-  const { lang, setLang, theme, toggleTheme, cartCount, unreadCount, user, setUser, dir } = useApp()
+  const { lang, setLang, theme, toggleTheme, cartCount, unreadCount, user, setUser, dir, isAdmin } = useApp()
   const [menuOpen, setMenuOpen] = useState(false)
   const [searchOpen, setSearchOpen] = useState(false)
   const [searchQuery, setSearchQuery] = useState('')
@@ -48,6 +48,17 @@ export function Header() {
                 {link.label}
               </Link>
             ))}
+            
+            {/* Admin Dashboard Button (Desktop Only) */}
+            {isAdmin && (
+              <Link
+                to="/admin"
+                className="px-4 py-1.5 ms-2 rounded-lg text-sm font-bold bg-brand text-[#0E0E11] hover:opacity-90 transition-opacity flex items-center gap-2 tap-highlight"
+              >
+                <LayoutDashboard size={16} />
+                {lang === 'ar' ? 'لوحة التحكم' : 'Dashboard'}
+              </Link>
+            )}
           </nav>
 
           <div className="flex-1 md:flex-none" />
@@ -154,7 +165,7 @@ export function Header() {
                 <Link to="/orders" onClick={() => setMenuOpen(false)} className="flex items-center gap-3 px-4 py-2.5 hover:bg-muted transition-colors text-sm tap-highlight">
                   <ShoppingCart size={16} className="text-muted-foreground" /> {lang === 'ar' ? 'طلباتي' : 'My Orders'}
                 </Link>
-                {(user.role === 'admin' || user.role === 'manager' || user.role === 'sales') && (
+                {isAdmin && (
                   <Link to="/admin" onClick={() => setMenuOpen(false)} className="flex items-center gap-3 px-4 py-2.5 hover:bg-muted transition-colors text-sm text-brand tap-highlight">
                     <LayoutDashboard size={16} /> {lang === 'ar' ? 'لوحة التحكم' : 'Dashboard'}
                   </Link>
