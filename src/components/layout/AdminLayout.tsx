@@ -1,156 +1,151 @@
-import { useState, type ReactNode } from 'react'
+import { useState } from 'react'
 import { Link, useLocation, useNavigate } from 'react-router-dom'
-import {
-  LayoutDashboard, ShoppingBag, Package, Tag, Gift, MessageSquare,
-  FileText, Bell, ClipboardList, Star, Sun, Moon, Globe, Menu, X,
-  ChevronRight, LogOut, User,
+import { 
+  LayoutDashboard, ShoppingBag, Package, Tags, Gift, Star, 
+  MessageSquare, FileText, Bell, ClipboardList, LogOut, 
+  Globe, Moon, Sun, ChevronLeft, ChevronRight, Menu, X, MapPin
 } from 'lucide-react'
 import { useApp } from '../../context/AppContext'
-import { ToastContainer } from '../ui/Toast'
 import logoImg from '../../imports/image.png'
 
-type NavItem = {
-  to: string
-  icon: React.ComponentType<{ size?: number; strokeWidth?: number }>
-  labelEn: string
-  labelAr: string
-  adminOnly?: boolean
-}
-
-const navItems: NavItem[] = [
-  { to: '/admin', icon: LayoutDashboard, labelEn: 'Dashboard', labelAr: 'لوحة التحكم' },
-  { to: '/admin/orders', icon: ShoppingBag, labelEn: 'Orders', labelAr: 'الطلبات' },
-  { to: '/admin/products', icon: Package, labelEn: 'Products', labelAr: 'المنتجات' },
-  { to: '/admin/categories', icon: Tag, labelEn: 'Categories', labelAr: 'الفئات' },
-  { to: '/admin/offers', icon: Gift, labelEn: 'Offers', labelAr: 'العروض' },
-  { to: '/admin/reviews', icon: Star, labelEn: 'Reviews', labelAr: 'التقييمات' },
-  { to: '/admin/chat', icon: MessageSquare, labelEn: 'Support Chat', labelAr: 'دردشة الدعم' },
-  { to: '/admin/invoices', icon: FileText, labelEn: 'Invoices', labelAr: 'الفواتير' },
-  { to: '/admin/notifications', icon: Bell, labelEn: 'Notifications', labelAr: 'الإشعارات' },
-  { to: '/admin/edit-logs', icon: ClipboardList, labelEn: 'Edit Logs', labelAr: 'سجل التعديلات', adminOnly: true },
-]
-
-export function AdminLayout({ children }: { children: ReactNode }) {
-  const { lang, setLang, theme, toggleTheme, user, setUser, dir } = useApp()
-  const { pathname } = useLocation()
+export function AdminLayout({ children }: { children: React.ReactNode }) {
+  const { lang, setLang, theme, toggleTheme, dir, isAdmin, user, setUser } = useApp()
+  const location = useLocation()
   const navigate = useNavigate()
-  const [sidebarOpen, setSidebarOpen] = useState(false)
+  
+  // السلايدر مقفول افتراضياً عشان الشاشة تبقى واسعة
+  const [isSidebarOpen, setIsSidebarOpen] = useState(false)
+  const [country, setCountry] = useState('IQ') 
 
-  const filteredNav = navItems.filter(item => {
-    if (item.adminOnly && user?.role !== 'admin') return false
-    return true
-  })
+  const adminLinks = [
+    { nameEn: 'Dashboard', nameAr: 'لوحة التحكم', path: '/admin', icon: LayoutDashboard },
+    { nameEn: 'Orders', nameAr: 'الطلبات', path: '/admin/orders', icon: ShoppingBag },
+    { nameEn: 'Products', nameAr: 'المنتجات', path: '/admin/products', icon: Package },
+    { nameEn: 'Categories', nameAr: 'الفئات', path: '/admin/categories', icon: Tags },
+    { nameEn: 'Offers', nameAr: 'العروض', path: '/admin/offers', icon: Gift },
+    { nameEn: 'Reviews', nameAr: 'التقييمات', path: '/admin/reviews', icon: Star },
+    { nameEn: 'Support Chat', nameAr: 'دردشة الدعم', path: '/admin/chat', icon: MessageSquare },
+    { nameEn: 'Invoices', nameAr: 'الفواتير', path: '/admin/invoices', icon: FileText },
+    { nameEn: 'Notifications', nameAr: 'الإشعارات', path: '/admin/notifications', icon: Bell },
+    ...(isAdmin ? [{ nameEn: 'Edit Logs', nameAr: 'سجل التعديلات', path: '/admin/logs', icon: ClipboardList }] : []),
+  ]
 
-  function NavLink({ item }: { item: NavItem }) {
-    const active = pathname === item.to
-    return (
-      <Link
-        to={item.to}
-        onClick={() => setSidebarOpen(false)}
-        className={`flex items-center gap-3 px-3 py-2.5 rounded-xl transition-all tap-highlight text-sm ${
-          active
-            ? 'bg-brand text-[#0E0E11] font-semibold'
-            : 'text-muted-foreground hover:bg-muted hover:text-foreground'
-        }`}
-      >
-        <item.icon size={18} strokeWidth={active ? 2.5 : 2} />
-        <span className="flex-1">{lang === 'ar' ? item.labelAr : item.labelEn}</span>
-        {active && <ChevronRight size={14} className={dir === 'rtl' ? 'rotate-180' : ''} />}
-      </Link>
-    )
+  const handleLogout = () => {
+    setUser(null)
+    navigate('/login')
   }
 
-  const Sidebar = () => (
-    <div className="flex flex-col h-full">
-      <div className="p-4 border-b border-border">
-        <Link to="/" className="flex items-center gap-2">
-          <img src={logoImg} alt="LOXX KING" className="h-8 w-8 rounded-lg" />
-          <span className="font-display font-bold">
-            <span>LOXX</span><span className="text-brand"> KING</span>
-          </span>
-        </Link>
-        <p className="text-xs text-muted-foreground mt-1 ms-10">
-          {lang === 'ar' ? 'لوحة الإدارة' : 'Admin Dashboard'}
-        </p>
-      </div>
-
-      <nav className="flex-1 p-3 space-y-0.5 overflow-y-auto">
-        {filteredNav.map(item => <NavLink key={item.to} item={item} />)}
-      </nav>
-
-      <div className="p-3 border-t border-border space-y-1">
-        {/* Role badge */}
-        <div className="px-3 py-2 bg-muted rounded-xl">
-          <p className="text-xs text-muted-foreground">{lang === 'ar' ? 'الدور' : 'Role'}</p>
-          <p className="text-sm font-semibold capitalize">{user?.role ?? 'Guest'}</p>
-        </div>
-        <div className="flex gap-1">
-          <button onClick={toggleTheme} className="flex-1 flex items-center justify-center gap-1.5 h-9 rounded-xl hover:bg-muted transition-colors text-xs tap-highlight">
-            {theme === 'dark' ? <Sun size={14} /> : <Moon size={14} />}
-            {theme === 'dark' ? (lang === 'ar' ? 'فاتح' : 'Light') : (lang === 'ar' ? 'داكن' : 'Dark')}
-          </button>
-          <button onClick={() => setLang(lang === 'en' ? 'ar' : 'en')} className="flex-1 flex items-center justify-center gap-1.5 h-9 rounded-xl hover:bg-muted transition-colors text-xs font-bold tap-highlight">
-            <Globe size={14} />
-            {lang === 'en' ? 'AR' : 'EN'}
-          </button>
-        </div>
-        <button
-          onClick={() => { setUser(null); navigate('/login') }}
-          className="w-full flex items-center gap-2 px-3 py-2.5 rounded-xl text-red-500 hover:bg-red-50 dark:hover:bg-red-900/20 transition-colors text-sm tap-highlight"
-        >
-          <LogOut size={16} /> {lang === 'ar' ? 'تسجيل الخروج' : 'Logout'}
-        </button>
-      </div>
-    </div>
-  )
-
   return (
-    <div className="min-h-screen bg-background text-foreground flex">
-      {/* Desktop Sidebar */}
-      <aside className="hidden md:flex flex-col w-60 shrink-0 border-e border-border bg-card sticky top-0 h-screen">
-        <Sidebar />
-      </aside>
-
-      {/* Mobile Sidebar Overlay */}
-      {sidebarOpen && (
-        <>
-          <div className="fixed inset-0 z-40 bg-black/50 md:hidden" onClick={() => setSidebarOpen(false)} />
-          <aside className={`fixed inset-y-0 ${dir === 'rtl' ? 'right-0' : 'left-0'} z-50 w-64 bg-card border-e border-border md:hidden animate-slide-up`}
-            style={{ animation: 'slideIn 0.2s ease-out' }}
-          >
-            <Sidebar />
-          </aside>
-        </>
-      )}
-
-      {/* Main */}
-      <div className="flex-1 flex flex-col min-w-0">
-        {/* Top Bar */}
-        <header className="sticky top-0 z-30 bg-card/95 backdrop-blur-md border-b border-border px-4 h-14 flex items-center gap-3">
-          <button
-            onClick={() => setSidebarOpen(v => !v)}
-            className="md:hidden w-9 h-9 rounded-xl flex items-center justify-center hover:bg-muted transition-colors tap-highlight"
+    <div className="flex h-screen bg-muted/20 font-sans" dir={dir}>
+      
+      {/* الشريط العلوي الثابت (الهيدر) وفيه زرار السلايدر */}
+      <header className="fixed top-0 left-0 right-0 h-16 bg-card border-b border-border flex items-center px-4 justify-between z-30 shadow-sm">
+        <div className="flex items-center gap-4">
+          <button 
+            onClick={() => setIsSidebarOpen(true)}
+            className="w-10 h-10 rounded-xl flex items-center justify-center bg-brand/10 text-brand hover:bg-brand hover:text-[#0E0E11] transition-colors tap-highlight"
           >
             <Menu size={20} />
           </button>
-          <div className="flex-1">
-            <p className="font-display font-semibold text-sm">
-              {filteredNav.find(i => i.to === pathname)?.[lang === 'ar' ? 'labelAr' : 'labelEn'] ?? 'Admin'}
-            </p>
-          </div>
-          <div className="flex items-center gap-1">
-            <Link to="/" className="text-xs text-muted-foreground hover:text-brand transition-colors px-2 py-1 rounded-lg hover:bg-muted tap-highlight">
-              {lang === 'ar' ? 'المتجر ↗' : 'Store ↗'}
-            </Link>
-            <div className="w-8 h-8 rounded-full bg-brand flex items-center justify-center text-xs font-bold text-[#0E0E11]">
-              {user?.name?.[0] ?? 'A'}
-            </div>
-          </div>
-        </header>
+          <Link to="/admin" className="flex items-center gap-2 tap-highlight">
+            <img src={logoImg} alt="LOXX KING" className="w-9 h-9 rounded-full object-cover bg-black" />
+            <span className="font-display font-black text-xl tracking-wide hidden sm:block">
+              <span className="text-foreground">LOXX</span>
+              <span className="text-brand"> KING</span>
+            </span>
+          </Link>
+        </div>
+        <div className="flex items-center gap-3">
+          <span className="text-sm font-bold text-muted-foreground bg-muted/50 px-4 py-1.5 rounded-full border border-border">
+            {isAdmin ? 'Admin' : 'Store Manager'}
+          </span>
+        </div>
+      </header>
 
-        <main className="flex-1 p-4 md:p-6">{children}</main>
-      </div>
-      <ToastContainer />
+      {/* خلفية ضبابية لما السلايدر يفتح */}
+      {isSidebarOpen && (
+        <div 
+          className="fixed inset-0 bg-black/40 z-40 backdrop-blur-sm transition-opacity"
+          onClick={() => setIsSidebarOpen(false)}
+        />
+      )}
+
+      {/* السلايدر نفسه (القائمة بتاعتك اللي بتتحرك) */}
+      <aside className={`fixed top-0 bottom-0 ${dir === 'rtl' ? 'right-0' : 'left-0'} w-72 bg-card z-50 transform transition-transform duration-300 ease-in-out shadow-2xl flex flex-col ${
+        isSidebarOpen ? 'translate-x-0' : (dir === 'rtl' ? 'translate-x-full' : '-translate-x-full')
+      }`}>
+        
+        <div className="h-16 p-4 border-b border-border flex items-center justify-between bg-muted/10">
+          <p className="text-sm text-muted-foreground font-bold">
+            {lang === 'ar' ? 'لوحة الإدارة' : 'Admin Panel'}
+          </p>
+          <button 
+            onClick={() => setIsSidebarOpen(false)}
+            className="w-8 h-8 rounded-full flex items-center justify-center hover:bg-muted text-muted-foreground tap-highlight"
+          >
+            <X size={18} />
+          </button>
+        </div>
+
+        <nav className="flex-1 overflow-y-auto py-4 px-3 space-y-1 no-scrollbar">
+          {adminLinks.map((link) => {
+            const isActive = location.pathname === link.path || location.pathname.startsWith(`${link.path}/`)
+            return (
+              <Link
+                key={link.path}
+                to={link.path}
+                onClick={() => setIsSidebarOpen(false)}
+                className={`flex items-center justify-between px-4 py-3 rounded-xl transition-all duration-200 group tap-highlight ${
+                  isActive 
+                    ? 'bg-brand text-[#0E0E11] font-bold shadow-md shadow-brand/20' 
+                    : 'text-muted-foreground hover:bg-muted hover:text-foreground font-medium'
+                }`}
+              >
+                <div className="flex items-center gap-3">
+                  <link.icon size={20} className={isActive ? 'text-[#0E0E11]' : 'opacity-80 group-hover:opacity-100'} />
+                  <span className="text-sm">{lang === 'ar' ? link.nameAr : link.nameEn}</span>
+                </div>
+                {isActive && (
+                  dir === 'rtl' ? <ChevronLeft size={16} className="opacity-70" /> : <ChevronRight size={16} className="opacity-70" />
+                )}
+              </Link>
+            )
+          })}
+        </nav>
+
+        {/* الفوتر: البلد، الدارك مود، اللغة، تسجيل الخروج */}
+        <div className="p-4 border-t border-border space-y-4 bg-muted/10">
+          <div className="flex items-center justify-between px-2 text-muted-foreground mt-2">
+            <button onClick={() => setCountry(country === 'IQ' ? 'AE' : 'IQ')} className="flex items-center gap-1.5 hover:text-brand transition-colors text-sm font-semibold tap-highlight">
+              <span className="text-lg">{country === 'IQ' ? '🇮🇶' : '🇦🇪'}</span>
+              <MapPin size={16} />
+            </button>
+            <button onClick={toggleTheme} className="flex items-center gap-1.5 hover:text-foreground transition-colors text-sm font-semibold tap-highlight">
+              {theme === 'dark' ? <Sun size={16} /> : <Moon size={16} />}
+              {theme === 'dark' ? (lang === 'ar' ? 'فاتح' : 'Light') : (lang === 'ar' ? 'داكن' : 'Dark')}
+            </button>
+            <button onClick={() => setLang(lang === 'en' ? 'ar' : 'en')} className="flex items-center gap-1.5 hover:text-foreground transition-colors text-sm font-semibold tap-highlight">
+              <Globe size={16} />
+              {lang === 'en' ? 'AR' : 'EN'}
+            </button>
+          </div>
+
+          <button 
+            onClick={handleLogout}
+            className="w-full flex items-center justify-center gap-2 text-red-500 hover:bg-red-500/10 px-4 py-2.5 rounded-xl transition-colors text-sm font-bold tap-highlight mt-2"
+          >
+            {dir === 'rtl' ? <LogOut size={18} className="rotate-180" /> : <LogOut size={18} />}
+            {lang === 'ar' ? 'تسجيل الخروج' : 'Logout'}
+          </button>
+        </div>
+      </aside>
+
+      {/* محتوى الصفحة الرئيسية */}
+      <main className="flex-1 flex flex-col h-full pt-16 overflow-hidden w-full">
+        <div className="flex-1 overflow-auto bg-muted/10 p-2 sm:p-4">
+          {children}
+        </div>
+      </main>
     </div>
   )
 }
