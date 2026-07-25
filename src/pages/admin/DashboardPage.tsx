@@ -1,14 +1,15 @@
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { Link, useLocation } from 'react-router-dom'
 import { 
   Search, ChevronDown, MessageCircle, FileText, 
   MapPin, Store, Truck, Calendar, Users, Package, 
-  LayoutDashboard, ShoppingBag, Tags, Gift, Star, MessageSquare, Bell, ClipboardList, X, CheckCircle, AlertTriangle 
+  ShoppingBag, Tags, Gift, Star, MessageSquare, Bell, ClipboardList, X, CheckCircle, AlertTriangle 
 } from 'lucide-react'
 import { AdminLayout } from '../../components/layout/AdminLayout'
 import { useApp } from '../../context/AppContext'
+import logoImg from '../../imports/image.png'
 
-const crmOrders = [
+const initialOrders = [
   { id: '69943', customer: 'MR AHMD', phone: '07654657689', date: '2026-07-25', countryEn: 'Iraq', countryAr: 'العراق', cityEn: 'Mosul', cityAr: 'الموصل', source: 'فيسبوك', store: 'Lotus Blue', shipping: 'شركة صندوق التوصيل', statusEn: 'New Order', statusAr: 'طلب جديد', amount: '100,000 IQD', chat: 'meta' },
   { id: '69942', customer: 'Nadeen elebyary', phone: '05386466663', date: '2026-07-25', countryEn: 'Turkey', countryAr: 'تركيا', cityEn: 'Istanbul', cityAr: 'اسطنبول', source: 'فيسبوك', store: 'Lavva الالمانية', shipping: 'surat', statusEn: 'Delivering', statusAr: 'قيد التسليم', amount: '800,000 TRY', chat: 'meta' },
   { id: '69941', customer: 'Ahmed', phone: '07543216785', date: '2026-07-24', countryEn: 'Iraq', countryAr: 'العراق', cityEn: 'Baghdad', cityAr: 'بغداد', source: 'فيسبوك', store: 'Lotus Blue', shipping: 'شركة صندوق التوصيل', statusEn: 'New Order', statusAr: 'طلب جديد', amount: '50,000 IQD', chat: 'meta' },
@@ -20,75 +21,91 @@ export default function DashboardPage() {
   const { lang, isAdmin } = useApp()
   const location = useLocation()
   const [selectedOrder, setSelectedOrder] = useState<any>(null)
+  const [orders, setOrders] = useState(initialOrders)
+  const [activeFilters, setActiveFilters] = useState<Record<string, string>>({})
 
-  const siteNavTabs = [
-    { path: '/admin/orders', nameEn: 'Orders', nameAr: 'الطلبات', icon: ShoppingBag },
-    { path: '/admin/products', nameEn: 'Products', nameAr: 'المنتجات', icon: Package },
-    { path: '/admin/categories', nameEn: 'Categories', nameAr: 'الفئات', icon: Tags },
-    { path: '/admin/offers', nameEn: 'Offers', nameAr: 'العروض', icon: Gift },
-    { path: '/admin/reviews', nameEn: 'Reviews', nameAr: 'التقييمات', icon: Star },
-    { path: '/admin/chat', nameEn: 'Support Chat', nameAr: 'دردشة الدعم', icon: MessageSquare },
-    { path: '/admin/invoices', nameEn: 'Invoices', nameAr: 'الفواتير', icon: FileText },
-    { path: '/admin/notifications', nameEn: 'Notifications', nameAr: 'الإشعارات', icon: Bell },
-    ...(isAdmin ? [{ path: '/admin/logs', nameEn: 'Edit Logs', nameAr: 'سجل التعديلات', icon: ClipboardList }] : []),
+  const menuItems = [
+    { type: 'link', path: '/admin/orders', nameEn: 'Orders', nameAr: 'الطلبات', icon: ShoppingBag },
+    { type: 'link', path: '/admin/products', nameEn: 'Products', nameAr: 'المنتجات', icon: Package },
+    { type: 'link', path: '/admin/categories', nameEn: 'Categories', nameAr: 'الفئات', icon: Tags },
+    { type: 'link', path: '/admin/offers', nameEn: 'Offers', nameAr: 'العروض', icon: Gift },
+    { type: 'link', path: '/admin/reviews', nameEn: 'Reviews', nameAr: 'التقييمات', icon: Star },
+    { type: 'link', path: '/admin/chat', nameEn: 'Support Chat', nameAr: 'دردشة الدعم', icon: MessageSquare },
+    { type: 'link', path: '/admin/invoices', nameEn: 'Invoices', nameAr: 'الفواتير', icon: FileText },
+    { type: 'link', path: '/admin/notifications', nameEn: 'Notifications', nameAr: 'الإشعارات', icon: Bell },
+    ...(isAdmin ? [{ type: 'link', path: '/admin/logs', nameEn: 'Edit Logs', nameAr: 'سجل التعديلات', icon: ClipboardList }] : []),
+
+    // كل فلتر ليه "key" هو نفسه اسم الـ query param اللي هيتبعت للباك اند
+    { type: 'filter', key: 'store',   nameEn: 'Filter by Store',    nameAr: 'تصفية حسب المتجر',      icon: Store },
+    { type: 'filter', key: 'order',   nameEn: 'Filter by Order',    nameAr: 'فلترة حسب الطلب',        icon: Search },
+    { type: 'filter', key: 'courier', nameEn: 'Filter by Courier',  nameAr: 'تصفية حسب شركة التوصيل', icon: Truck },
+    { type: 'filter', key: 'city',    nameEn: 'Filter by City',     nameAr: 'تصفية حسب المدينة',      icon: MapPin },
+    { type: 'filter', key: 'page',    nameEn: 'Filter by Page',     nameAr: 'فلترة حسب الصفحة',       icon: FileText },
+    { type: 'filter', key: 'product', nameEn: 'Filter by Product',  nameAr: 'فلترة حسب المنتج',       icon: Package },
+    { type: 'filter', key: 'gender',  nameEn: 'Filter by Gender',   nameAr: 'فلترة حسب الجنس',        icon: Users },
+    { type: 'filter', key: 'last10',  nameEn: 'Last 10 Operations', nameAr: 'آخر 10 عمليات',          icon: Calendar },
   ]
 
-  const filters = [
-    { labelEn: 'Filter by Store', labelAr: 'تصفية حسب المتجر', icon: Store },
-    { labelEn: 'Filter by Order', labelAr: 'فلترة حسب الطلب', icon: Search },
-    { labelEn: 'Filter by Courier', labelAr: 'تصفية حسب شركة التوصيل', icon: Truck },
-    { labelEn: 'Filter by City', labelAr: 'تصفية حسب المدينة', icon: MapPin },
-    { labelEn: 'Filter by Page', labelAr: 'فلترة حسب الصفحة', icon: FileText },
-    { labelEn: 'Filter by Product', labelAr: 'فلترة حسب المنتج', icon: Package },
-    { labelEn: 'Filter by Gender', labelAr: 'فلترة حسب الجنس', icon: Users },
-    { labelEn: 'Last 10 Operations', labelAr: 'آخر 10 عمليات', icon: Calendar },
-  ]
+  // كل ما activeFilters يتغيّر، ابعت الطلب لـ endpoint الطلبات
+  useEffect(() => {
+    const params = new URLSearchParams(activeFilters).toString()
+    fetch(`/api/orders${params ? `?${params}` : ''}`)
+      .then(res => res.json())
+      .then(data => setOrders(data))
+      .catch(err => console.error('Filter fetch failed:', err))
+  }, [activeFilters])
+
+  // دالة بسيطة تحدث فلتر واحد — تستخدمها جوه dropdown كل فلتر بعدين
+  function updateFilter(key: string, value: string) {
+    setActiveFilters(prev => ({ ...prev, [key]: value }))
+  }
 
   return (
     <AdminLayout>
-      <div className="w-full space-y-3 pb-8">
-        
-        {/* منطقة الدمج */}
-        <div className="bg-card p-4 rounded-xl border-2 border-brand/70 shadow-sm space-y-3">
-          <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-5 xl:grid-cols-10 gap-2">
-            {siteNavTabs.map((tab) => {
-              const isActive = location.pathname === tab.path
+      <div className="w-full max-w-7xl mx-auto space-y-3 pb-8">
+
+        {/* اللوجو في النص، أعلى الصفحة مباشرة بمسافة أقل من فوق */}
+
+        {/* التابات والفلاتر — متوسطة، من غير فريم أو بوردر حواليها */}
+        <div dir="rtl" className="flex flex-wrap justify-center gap-1.5">
+          {menuItems.map((item, idx) => {
+            const label = lang === 'ar' ? item.nameAr : item.nameEn
+
+            if (item.type === 'link') {
+              const isActive = location.pathname === item.path
               return (
                 <Link
-                  key={tab.path}
-                  to={tab.path}
-                  className={`flex items-center justify-between px-2.5 py-2 rounded-lg border border-brand text-brand hover:bg-brand hover:text-[#0E0E11] transition-all text-[11px] font-semibold tap-highlight group whitespace-nowrap shadow-sm ${
+                  key={item.path}
+                  to={item.path}
+                  className={`flex items-center justify-between w-[calc(16.666%-6px)] px-2 py-1.5 rounded-lg border border-brand text-brand hover:bg-brand hover:text-[#0E0E11] transition-all text-[10px] font-semibold tap-group ${
                     isActive ? 'bg-brand text-[#0E0E11] shadow' : 'bg-brand/10'
                   }`}
                 >
-                  <div className="flex items-center gap-1.5 truncate">
-                    <tab.icon size={13} className="opacity-90 group-hover:opacity-100 flex-shrink-0" />
-                    <span className="truncate">{lang === 'ar' ? tab.nameAr : tab.nameEn}</span>
+                  <div className="flex items-center gap-1 truncate">
+                    <item.icon size={12} className="opacity-90 flex-shrink-0" />
+                    <span className="truncate">{label}</span>
                   </div>
                 </Link>
               )
-            })}
-          </div>
+            }
 
-          <hr className="border-brand/30 my-2" />
-
-          <div className="grid grid-cols-2 md:grid-cols-4 xl:grid-cols-8 gap-2">
-            {filters.map((filter, idx) => (
+            return (
               <button
-                key={idx}
-                className="flex items-center justify-between px-2.5 py-2 rounded-lg border border-brand bg-brand/10 text-brand hover:bg-brand hover:text-[#0E0E11] transition-all text-[11px] font-semibold tap-highlight group whitespace-nowrap shadow-sm"
+                key={item.key}
+                onClick={() => {/* TODO: افتح dropdown القيم، وبعدين updateFilter(item.key, value) */}}
+                className="flex items-center justify-between w-[calc(16.666%-6px)] px-2 py-1.5 rounded-lg border border-brand bg-brand/10 text-brand hover:bg-brand hover:text-[#0E0E11] transition-all text-[10px] font-semibold tap-group"
               >
-                <div className="flex items-center gap-1.5">
-                  <filter.icon size={13} className="opacity-90 group-hover:opacity-100" />
-                  <span className="truncate max-w-[85px] sm:max-w-none">{lang === 'ar' ? filter.labelAr : filter.labelEn}</span>
+                <div className="flex items-center gap-1 truncate">
+                  <item.icon size={12} className="opacity-90 flex-shrink-0" />
+                  <span className="truncate">{label}</span>
                 </div>
-                <ChevronDown size={12} className="opacity-80 group-hover:opacity-100" />
+                <ChevronDown size={11} className="opacity-80 flex-shrink-0 ms-1" />
               </button>
-            ))}
-          </div>
+            )
+          })}
         </div>
 
-        {/* CRM Data Table - عند الضغط على أي صف تفتح تفاصيل الطلب */}
+        {/* CRM Data Table */}
         <div className="bg-card rounded-xl border border-border shadow-sm overflow-hidden">
           <div className="overflow-x-auto no-scrollbar">
             <table className="w-full text-[11px] sm:text-xs text-start whitespace-nowrap">
@@ -108,7 +125,7 @@ export default function DashboardPage() {
                 </tr>
               </thead>
               <tbody className="divide-y divide-border">
-                {crmOrders.map((order, idx) => (
+                {orders.map((order, idx) => (
                   <tr 
                     key={idx} 
                     onClick={() => setSelectedOrder(order)}
@@ -150,12 +167,11 @@ export default function DashboardPage() {
           </div>
         </div>
 
-        {/* نافذة تفاصيل الطلب الكاملة (Modal) عند النقر على أي طلب */}
+        {/* نافذة تفاصيل الطلب الكاملة (Modal) */}
         {selectedOrder && (
           <div className="fixed inset-0 bg-black/60 backdrop-blur-sm z-50 flex items-center justify-center p-4 overflow-y-auto">
             <div className="bg-card w-full max-w-4xl rounded-2xl border-2 border-brand/70 shadow-2xl overflow-hidden animate-fade-in">
               
-              {/* هيدر المودال */}
               <div className="bg-brand/10 px-6 py-4 border-b border-border flex items-center justify-between">
                 <div className="flex items-center gap-3">
                   <span className="text-sm font-bold text-brand bg-brand/20 px-3 py-1 rounded-lg">
@@ -171,10 +187,8 @@ export default function DashboardPage() {
                 </button>
               </div>
 
-              {/* محتوى تفاصيل الطلب */}
               <div className="p-6 space-y-6 max-h-[80vh] overflow-y-auto no-scrollbar">
                 
-                {/* تنبيهات الحالة */}
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
                   <div className="bg-amber-500/10 border border-amber-500/30 p-3 rounded-xl flex items-center gap-3">
                     <AlertTriangle className="text-amber-500 flex-shrink-0" size={20} />
@@ -190,10 +204,7 @@ export default function DashboardPage() {
                   </div>
                 </div>
 
-                {/* تفاصيل العميل والملخص */}
                 <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                  
-                  {/* معلومات العميل */}
                   <div className="bg-muted/40 p-4 rounded-xl border border-border space-y-2">
                     <h4 className="text-xs font-bold text-brand uppercase">{lang === 'ar' ? 'معلومات العميل' : 'Customer Info'}</h4>
                     <p className="text-xs font-bold">{selectedOrder.customer}</p>
@@ -201,7 +212,6 @@ export default function DashboardPage() {
                     <p className="text-xs">{lang === 'ar' ? selectedOrder.countryAr : selectedOrder.countryEn} - {lang === 'ar' ? selectedOrder.cityAr : selectedOrder.cityEn}</p>
                   </div>
 
-                  {/* معلومات الشحن والمتجر */}
                   <div className="bg-muted/40 p-4 rounded-xl border border-border space-y-2">
                     <h4 className="text-xs font-bold text-brand uppercase">{lang === 'ar' ? 'التوصيل والمتجر' : 'Shipping & Store'}</h4>
                     <p className="text-xs"><span className="text-muted-foreground">{lang === 'ar' ? 'المتجر:' : 'Store:'}</span> <strong className="text-foreground">{selectedOrder.store}</strong></p>
@@ -209,7 +219,6 @@ export default function DashboardPage() {
                     <p className="text-xs"><span className="text-muted-foreground">{lang === 'ar' ? 'مصدر الطلب:' : 'Source:'}</span> <strong className="text-foreground">{selectedOrder.source}</strong></p>
                   </div>
 
-                  {/* ملخص المبالغ */}
                   <div className="bg-brand/5 p-4 rounded-xl border border-brand/30 space-y-2">
                     <h4 className="text-xs font-bold text-brand uppercase">{lang === 'ar' ? 'ملخص الطلب' : 'Order Summary'}</h4>
                     <div className="flex justify-between text-xs">
@@ -221,10 +230,8 @@ export default function DashboardPage() {
                       <strong className="text-brand">Cash on Delivery</strong>
                     </div>
                   </div>
-
                 </div>
 
-                {/* أزرار الإجراءات والمراسلة */}
                 <div className="bg-muted/30 p-4 rounded-xl border border-border flex flex-wrap items-center justify-between gap-3">
                   <div className="flex items-center gap-2">
                     <button className="px-3 py-2 bg-brand text-[#0E0E11] font-bold text-xs rounded-lg shadow hover:opacity-90 transition-opacity">
@@ -249,7 +256,6 @@ export default function DashboardPage() {
 
               </div>
 
-              {/* فوتر المودال */}
               <div className="bg-muted/40 px-6 py-3 border-t border-border flex justify-end">
                 <button 
                   onClick={() => setSelectedOrder(null)}
