@@ -20,7 +20,7 @@ const initialOrders = Array.from({ length: 30 }, (_, index) => {
   
   return {
     receipt: id,
-    employee: index % 2 === 0 ? 'Nadeen Moelebyary' : 'AHMED',
+    employee: index % 2 === 0 ? 'Nadeen Moelebyary' : 'Ahmed',
     customer: names[index % names.length],
     phone: `07${Math.floor(100000000 + Math.random() * 900000000)}`,
     createdAt: index < 5 ? '2026-07-26' : `2026-07-${String(20 - (index % 15)).padStart(2, '0')}`,

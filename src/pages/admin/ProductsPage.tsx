@@ -216,8 +216,7 @@ export default function ProductsPage() {
                   <th className="px-3 py-2.5 text-start">{lang === 'ar' ? 'الصورة' : 'Image'}</th>
                   <th className="px-3 py-2.5 text-start">{lang === 'ar' ? 'اسم المنتج' : 'Product Name'}</th>
                   <th className="px-3 py-2.5 text-start">{lang === 'ar' ? 'الدولة' : 'Country'}</th>
-                  <th className="px-3 py-2.5 text-start">{lang === 'ar' ? 'أسعار الأسود' : 'Black Prices'}</th>
-                  <th className="px-3 py-2.5 text-start">{lang === 'ar' ? 'السعر العادي' : 'Regular Price'}</th>
+                  <th className="px-3 py-2.5 text-start">{lang === 'ar' ? 'السعر ' : 'Regular Price'}</th>
                   <th className="px-3 py-2.5 text-start">{lang === 'ar' ? 'نوع البيع' : 'Sale Type'}</th>
                   <th className="px-3 py-2.5 text-center">{lang === 'ar' ? 'الكمية' : 'Stock'}</th>
                   <th className="px-3 py-2.5 text-center">{lang === 'ar' ? 'الإدخالات' : 'Entries'}</th>
