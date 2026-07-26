@@ -3,11 +3,11 @@ import { Link, useLocation } from 'react-router-dom'
 import { 
   Search, ChevronDown, MessageCircle, FileText, 
   MapPin, Store, Truck, Calendar, Users, Package, 
-  ShoppingBag, Tags, Gift, Star, MessageSquare, Bell, ClipboardList, X, CheckCircle, AlertTriangle 
+  ShoppingBag, Tags, Gift, Star, MessageSquare, Bell, ClipboardList, X, CheckCircle, AlertTriangle, 
+  TrendingUp
 } from 'lucide-react'
 import { AdminLayout } from '../../components/layout/AdminLayout'
 import { useApp } from '../../context/AppContext'
-import logoImg from '../../imports/image.png'
 
 const initialOrders = [
   { id: '69943', customer: 'MR AHMD', phone: '07654657689', date: '2026-07-25', countryEn: 'Iraq', countryAr: 'العراق', cityEn: 'Mosul', cityAr: 'الموصل', source: 'فيسبوك', store: 'Lotus Blue', shipping: 'شركة صندوق التوصيل', statusEn: 'New Order', statusAr: 'طلب جديد', amount: '100,000 IQD', chat: 'meta' },
@@ -33,16 +33,15 @@ export default function DashboardPage() {
     { type: 'link', path: '/admin/chat', nameEn: 'Support Chat', nameAr: 'دردشة الدعم', icon: MessageSquare },
     { type: 'link', path: '/admin/invoices', nameEn: 'Invoices', nameAr: 'الفواتير', icon: FileText },
     { type: 'link', path: '/admin/notifications', nameEn: 'Notifications', nameAr: 'الإشعارات', icon: Bell },
+    {type: 'link', path: '/admin/operations', nameEn: 'Operations Center', nameAr: 'مركز العمليات', icon: TrendingUp },
     ...(isAdmin ? [{ type: 'link', path: '/admin/logs', nameEn: 'Edit Logs', nameAr: 'سجل التعديلات', icon: ClipboardList }] : []),
 
     // كل فلتر ليه "key" هو نفسه اسم الـ query param اللي هيتبعت للباك اند
-    { type: 'filter', key: 'store',   nameEn: 'Filter by Store',    nameAr: 'تصفية حسب المتجر',      icon: Store },
     { type: 'filter', key: 'order',   nameEn: 'Filter by Order',    nameAr: 'فلترة حسب الطلب',        icon: Search },
     { type: 'filter', key: 'courier', nameEn: 'Filter by Courier',  nameAr: 'تصفية حسب شركة التوصيل', icon: Truck },
     { type: 'filter', key: 'city',    nameEn: 'Filter by City',     nameAr: 'تصفية حسب المدينة',      icon: MapPin },
     { type: 'filter', key: 'page',    nameEn: 'Filter by Page',     nameAr: 'فلترة حسب الصفحة',       icon: FileText },
     { type: 'filter', key: 'product', nameEn: 'Filter by Product',  nameAr: 'فلترة حسب المنتج',       icon: Package },
-    { type: 'filter', key: 'gender',  nameEn: 'Filter by Gender',   nameAr: 'فلترة حسب الجنس',        icon: Users },
     { type: 'filter', key: 'last10',  nameEn: 'Last 10 Operations', nameAr: 'آخر 10 عمليات',          icon: Calendar },
   ]
 

@@ -3,7 +3,8 @@ import { Link, useLocation, useNavigate } from 'react-router-dom'
 import { 
   LayoutDashboard, ShoppingBag, Package, Tags, Gift, Star, 
   MessageSquare, FileText, Bell, ClipboardList, LogOut, 
-  Globe, Moon, Sun, ChevronLeft, ChevronRight, Menu, X, MapPin
+  Globe, Moon, Sun, ChevronLeft, ChevronRight, Menu, X, MapPin,
+  TrendingUp
 } from 'lucide-react'
 import { useApp } from '../../context/AppContext'
 import logoImg from '../../imports/image.png'
@@ -27,6 +28,7 @@ export function AdminLayout({ children }: { children: React.ReactNode }) {
     { nameEn: 'Support Chat', nameAr: 'دردشة الدعم', path: '/admin/chat', icon: MessageSquare },
     { nameEn: 'Invoices', nameAr: 'الفواتير', path: '/admin/invoices', icon: FileText },
     { nameEn: 'Notifications', nameAr: 'الإشعارات', path: '/admin/notifications', icon: Bell },
+    {nameEn: 'Operations Center', nameAr: 'مركز العمليات', path: '/admin/operations', icon: TrendingUp },
     ...(isAdmin ? [{ nameEn: 'Edit Logs', nameAr: 'سجل التعديلات', path: '/admin/logs', icon: ClipboardList }] : []),
   ]
 
