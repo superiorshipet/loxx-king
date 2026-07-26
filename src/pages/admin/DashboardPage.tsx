@@ -1,10 +1,13 @@
 import { useState, useRef, useEffect } from 'react'
+import { Link, useNavigate } from 'react-router-dom'
 import {
   Menu, Plus, Store, Search, Package, Tag, Truck, Users, Clock,
   Globe, MapPin, FileText, Wallet, ChevronLeft, ChevronRight,
   ChevronsLeft, ChevronsRight, MessageCircle, Database, Filter, Hash, UserCheck, Building2,
-  PhoneCall, X, Send, Smile, Mic, Paperclip, Image, Trash2, CheckCheck, ArrowRight, Edit3, Eye, DollarSign, Sparkles
+  PhoneCall, X, Send, Smile, Mic, Paperclip, Image, Trash2, CheckCheck, ArrowRight, Edit3, Eye, DollarSign, Sparkles,
+  LayoutDashboard, ShoppingBag, Gift, Star, Bell, ClipboardList, LogOut, MessageSquare
 } from 'lucide-react'
+import { useApp } from '../../context/AppContext'
 
 // إنشاء 30 طلب تجريبي تفصيلي
 const initialOrders = Array.from({ length: 30 }, (_, index) => {
@@ -76,13 +79,29 @@ const bottomActions = [
   { key: 'entered_data', name: 'البيانات المدخلة' },
 ]
 
-export default function LoxxKingInteractiveSystem() {
+// قائمة الروابط الموجودة في النظام للوصول لباقي الصفحات عبر السلايدر
+const sidebarNavItems = [
+  { to: '/admin', icon: LayoutDashboard, label: 'لوحة التحكم' },
+  { to: '/admin/orders', icon: ShoppingBag, label: 'الطلبات' },
+  { to: '/admin/products', icon: Package, label: 'المنتجات' },
+  { to: '/admin/categories', icon: Tag, label: 'الفئات' },
+  { to: '/admin/offers', icon: Gift, label: 'العروض' },
+  { to: '/admin/reviews', icon: Star, label: 'التقييمات' },
+  { to: '/admin/chat', icon: MessageSquare, label: 'دردشة الدعم' },
+  { to: '/admin/invoices', icon: FileText, label: 'الفواتير' },
+  { to: '/admin/notifications', icon: Bell, label: 'الإشعارات' },
+]
+
+export default function LoxxKingInteractiveSystemWithSidebar() {
+  const navigate = useNavigate()
+  const { lang, user } = useApp()
   const [orders] = useState(initialOrders)
   const [selectedOrder, setSelectedOrder] = useState(null)
   const [searchQuery, setSearchQuery] = useState('')
-  const [itemsPerPage, setItemsPerPage] = useState(10) // عدد العناصر في الصفحة
+  const [itemsPerPage, setItemsPerPage] = useState(10)
   const [currentPage, setCurrentPage] = useState(1)
   const [selectedDate, setSelectedDate] = useState('')
+  const [isSidebarOpen, setIsSidebarOpen] = useState(false)
   const dateInputRef = useRef(null)
 
   // حالات شات مركز المساعدة
@@ -129,7 +148,7 @@ export default function LoxxKingInteractiveSystem() {
     return matchesDate && matchesSearch;
   });
 
-  // حساب الترقيم (Pagination) بناءً على العدد المختار
+  // حساب الترقيم (Pagination)
   const totalPages = Math.ceil(filteredOrders.length / itemsPerPage) || 1
   const startIndex = (currentPage - 1) * itemsPerPage
   const currentTableData = filteredOrders.slice(startIndex, startIndex + itemsPerPage)
@@ -137,19 +156,21 @@ export default function LoxxKingInteractiveSystem() {
   return (
     <div dir="rtl" className="min-h-screen w-full bg-white text-gray-900 font-sans relative" style={{ fontFamily: "'NotoNaskhArabic-Regular', Arial, sans-serif" }}>
 
-      {/* ============ الهيدر العلوي (مع تفعيل زر العودة للرئيسية عند الضغط على Loxx King) ============ */}
+      {/* ============ الهيدر العلوي ============ */}
       <header className="relative w-full bg-white px-4 py-1.5 border-b border-gray-200 shadow-md z-30">
         <div className="flex items-center justify-between gap-2 flex-wrap w-full">
           
           <div dir="rtl" className="flex items-center gap-2">
-            <button className="w-7 h-7 rounded-lg flex items-center justify-center bg-gray-50 text-gray-600 hover:bg-gray-100 shadow-sm border border-gray-200">
+            <button 
+              onClick={() => setIsSidebarOpen(true)}
+              className="w-7 h-7 rounded-lg flex items-center justify-center bg-gray-50 text-gray-600 hover:bg-gray-100 shadow-sm border border-gray-200 cursor-pointer"
+            >
               <Menu size={15} />
             </button>
-            <button className="text-xs font-semibold text-gray-900 hover:text-sky-400 px-2.5 py-1 rounded-lg bg-sky-100 border border-sky-100 shadow-sm transition-all">عرض المنتجات</button>
-            <button className="text-xs font-semibold text-gray-900 hover:text-sky-400 px-2.5 py-1 rounded-lg bg-sky-100 border border-sky-100 shadow-sm transition-all">عرض الأسعار</button>
+            <button onClick={() => navigate('/admin/products')} className="text-xs font-semibold text-gray-900 hover:text-sky-400 px-2.5 py-1 rounded-lg bg-sky-100 border border-sky-100 shadow-sm transition-all cursor-pointer">عرض المنتجات</button>
+            <button onClick={() => navigate('/admin/offers')} className="text-xs font-semibold text-gray-900 hover:text-sky-400 px-2.5 py-1 rounded-lg bg-sky-100 border border-sky-100 shadow-sm transition-all cursor-pointer">عرض الأسعار</button>
           </div>
 
-          {/* زر الشعار للرجوع للرئيسية */}
           <div 
             onClick={() => { setSelectedOrder(null); setSearchQuery(''); setCurrentPage(1); }}
             className="absolute left-1/2 -translate-x-1/2 text-lg font-black tracking-wide cursor-pointer select-none hover:opacity-80 transition-opacity"
@@ -162,7 +183,7 @@ export default function LoxxKingInteractiveSystem() {
             {topNotifications.map((n) => (
               <button
                 key={n.key}
-                className="relative flex items-center gap-1 px-3 py-1.5 rounded-full bg-sky-100 border border-sky-100 text-gray-900 text-xs font-semibold hover:border-sky-400 hover:shadow transition-all shadow-sm"
+                className="relative flex items-center gap-1 px-3 py-1.5 rounded-full bg-sky-100 border border-sky-100 text-gray-900 text-xs font-semibold hover:border-sky-400 hover:shadow transition-all shadow-sm cursor-pointer"
               >
                 {n.name}
                 {n.count !== undefined && (
@@ -175,6 +196,56 @@ export default function LoxxKingInteractiveSystem() {
           </div>
         </div>
       </header>
+
+      {/* ============ السلايدر الجانبي (Sidebar Drawer) لربط بقية الصفحات ============ */}
+      {isSidebarOpen && (
+        <div className="fixed inset-0 z-50 flex">
+          <div 
+            onClick={() => setIsSidebarOpen(false)}
+            className="fixed inset-0 bg-black/50 backdrop-blur-xs transition-opacity"
+          ></div>
+
+          <div className="relative w-72 bg-white h-full shadow-2xl border-l border-gray-200 flex flex-col z-50 animate-in slide-in-from-right duration-200 text-right">
+            
+            <div className="p-4 border-b border-gray-200 flex items-center justify-between bg-gray-50">
+              <div className="flex items-center gap-2">
+                <span className="text-base font-black text-gray-900">Loxx</span>
+                <span className="text-base font-black text-sky-400">King</span>
+              </div>
+              <button 
+                onClick={() => setIsSidebarOpen(false)}
+                className="w-7 h-7 rounded-lg bg-white border border-gray-200 flex items-center justify-center text-gray-500 hover:text-gray-900 shadow-sm cursor-pointer"
+              >
+                <X size={16} />
+              </button>
+            </div>
+
+            <div className="flex-1 overflow-y-auto p-3 space-y-1.5">
+              {sidebarNavItems.map((item, idx) => (
+                <button
+                  key={idx}
+                  onClick={() => { setIsSidebarOpen(false); navigate(item.to); }}
+                  className="w-full flex items-center gap-3 px-3.5 py-2.5 rounded-xl text-xs font-bold text-gray-700 hover:bg-sky-50 hover:text-sky-600 transition-all cursor-pointer"
+                >
+                  <item.icon size={18} />
+                  <span>{item.label}</span>
+                </button>
+              ))}
+            </div>
+
+            <div className="p-3 border-t border-gray-200">
+              <button 
+                onClick={() => setIsSidebarOpen(false)}
+                className="w-full flex items-center gap-2 px-3.5 py-2.5 rounded-xl text-xs font-bold text-gray-500 hover:bg-gray-100 transition-colors cursor-pointer"
+              >
+                <LogOut size={16} />
+                <span>إغلاق القائمة</span>
+              </button>
+            </div>
+
+          </div>
+        </div>
+      )}
 
       {/* ============ شاشة تفاصيل الطلب ============ */}
       {selectedOrder ? (
@@ -204,13 +275,13 @@ export default function LoxxKingInteractiveSystem() {
           </div>
 
           <div className="flex flex-wrap items-center gap-1.5 bg-white p-2.5 rounded-xl border border-gray-200 shadow-sm text-xs">
-            <button className="px-3 py-1.5 rounded-lg bg-emerald-600 text-white font-bold shadow-sm">إعادة إرسال الطلب</button>
-            <button className="px-3 py-1.5 rounded-lg bg-white border border-gray-200 text-gray-700 font-semibold">تعديل حالة الطلب</button>
-            <button className="px-3 py-1.5 rounded-lg bg-white border border-gray-200 text-gray-700 font-semibold">تم معالجة الطلب</button>
-            <button className="px-3 py-1.5 rounded-lg bg-white border border-gray-200 text-gray-700 font-semibold">تعديل الطلب لتحويله لتقييمات أمر</button>
-            <button className="px-3 py-1.5 rounded-lg bg-white border border-gray-200 text-gray-700 font-semibold">تعيين الموظف</button>
-            <button className="px-3 py-1.5 rounded-lg bg-white border border-gray-200 text-gray-700 font-semibold">تعيين شركة التوصيل</button>
-            <button className="px-3 py-1.5 rounded-lg bg-white border border-gray-200 text-gray-700 font-semibold">تأجيل الطلب</button>
+            <button className="px-3 py-1.5 rounded-lg bg-emerald-600 text-white font-bold shadow-sm cursor-pointer">إعادة إرسال الطلب</button>
+            <button className="px-3 py-1.5 rounded-lg bg-white border border-gray-200 text-gray-700 font-semibold cursor-pointer">تعديل حالة الطلب</button>
+            <button className="px-3 py-1.5 rounded-lg bg-white border border-gray-200 text-gray-700 font-semibold cursor-pointer">تم معالجة الطلب</button>
+            <button className="px-3 py-1.5 rounded-lg bg-white border border-gray-200 text-gray-700 font-semibold cursor-pointer">تعديل الطلب لتحويله لتقييمات أمر</button>
+            <button className="px-3 py-1.5 rounded-lg bg-white border border-gray-200 text-gray-700 font-semibold cursor-pointer">تعيين الموظف</button>
+            <button className="px-3 py-1.5 rounded-lg bg-white border border-gray-200 text-gray-700 font-semibold cursor-pointer">تعيين شركة التوصيل</button>
+            <button className="px-3 py-1.5 rounded-lg bg-white border border-gray-200 text-gray-700 font-semibold cursor-pointer">تأجيل الطلب</button>
 
             <div className="mr-auto flex items-center gap-3">
               <span className="text-emerald-700 font-bold bg-emerald-50 px-2.5 py-1 rounded-md border border-emerald-200">{selectedOrder.status}</span>
@@ -340,25 +411,25 @@ export default function LoxxKingInteractiveSystem() {
                     </div>
 
                     <div className="flex flex-wrap items-center justify-end gap-1.5">
-                      <button className="px-3 py-1 rounded-lg bg-teal-600 text-white text-[11px] font-bold shadow-sm">سحب الفاتورة</button>
-                      <button className="px-3 py-1 rounded-lg bg-white border border-gray-300 text-gray-900 text-[11px] font-bold flex items-center gap-1">
+                      <button className="px-3 py-1 rounded-lg bg-teal-600 text-white text-[11px] font-bold shadow-sm cursor-pointer">سحب الفاتورة</button>
+                      <button className="px-3 py-1 rounded-lg bg-white border border-gray-300 text-gray-900 text-[11px] font-bold flex items-center gap-1 cursor-pointer">
                         <span className="text-blue-600 font-black">Meta</span>
                       </button>
-                      <button className="px-3 py-1 rounded-lg bg-emerald-600 text-white text-[11px] font-bold flex items-center gap-1 shadow-sm">
+                      <button className="px-3 py-1 rounded-lg bg-emerald-600 text-white text-[11px] font-bold flex items-center gap-1 shadow-sm cursor-pointer">
                         <PhoneCall size={11} /> WhatsApp
                       </button>
                     </div>
 
                     <div className="flex flex-wrap items-center justify-end gap-1.5">
-                      <button className="px-3 py-1 rounded-lg bg-sky-50 border border-sky-300 text-sky-700 text-[11px] font-bold flex items-center gap-1">
+                      <button className="px-3 py-1 rounded-lg bg-sky-50 border border-sky-300 text-sky-700 text-[11px] font-bold flex items-center gap-1 cursor-pointer">
                         <span>الطلب المربوط بمركز المساعدة</span>
                         <span className="bg-blue-600 text-white text-[9px] px-1.5 py-0.1 rounded-full">0</span>
                       </button>
-                      <button className="px-3 py-1 rounded-lg bg-emerald-50 border border-emerald-300 text-emerald-700 text-[11px] font-bold flex items-center gap-1">
+                      <button className="px-3 py-1 rounded-lg bg-emerald-50 border border-emerald-300 text-emerald-700 text-[11px] font-bold flex items-center gap-1 cursor-pointer">
                         <span>الإعجاب بالمنتج</span>
                         👍
                       </button>
-                      <button className="px-3 py-1 rounded-lg bg-rose-50 border border-rose-300 text-rose-700 text-[11px] font-bold flex items-center gap-1">
+                      <button className="px-3 py-1 rounded-lg bg-rose-50 border border-rose-300 text-rose-700 text-[11px] font-bold flex items-center gap-1 cursor-pointer">
                         <span>إرسال شكوى</span>
                         ⚠️
                       </button>
@@ -372,7 +443,7 @@ export default function LoxxKingInteractiveSystem() {
                 <div className="flex items-center justify-between text-xs font-bold text-gray-700">
                   <div className="flex items-center gap-2">
                     <span className="text-gray-400 font-normal">إخفاء الطلب من الجدول</span>
-                    <input type="checkbox" className="toggle toggle-sm" />
+                    <input type="checkbox" className="toggle toggle-sm cursor-pointer" />
                   </div>
                   <span>سجل مراحل الطلب ⏱️</span>
                 </div>
@@ -412,7 +483,7 @@ export default function LoxxKingInteractiveSystem() {
             {gridFilters.map((item) => (
               <button
                 key={item.key}
-                className="flex items-center justify-start gap-2 px-0.5 py-0.5 rounded bg-white border border-gray-200 text-black hover:border-sky-400 transition-all text-xs font-normal shadow-sm overflow-hidden"
+                className="flex items-center justify-start gap-2 px-0.5 py-0.5 rounded bg-white border border-gray-200 text-black hover:border-sky-400 transition-all text-xs font-normal shadow-sm overflow-hidden cursor-pointer"
               >
                 <div className="w-5 h-5 rounded-full bg-sky-400 text-white flex items-center justify-center flex-shrink-0 shadow-sm">
                   <item.icon size={18} />
@@ -426,7 +497,7 @@ export default function LoxxKingInteractiveSystem() {
             {bottomActions.map((action) => (
               <button
                 key={action.key}
-                className="relative px-3.5 py-1.5 rounded-full bg-white border border-gray-200 text-yellow-500 text-xs font-semibold shadow-sm hover:border-sky-400 transition-all"
+                className="relative px-3.5 py-1.5 rounded-full bg-white border border-gray-200 text-yellow-500 text-xs font-semibold shadow-sm hover:border-sky-400 transition-all cursor-pointer"
               >
                 {action.name}
                 {action.count !== undefined && (
@@ -441,7 +512,6 @@ export default function LoxxKingInteractiveSystem() {
           {/* شريط التحكم والبحث وعدد المدخلات */}
           <div className="flex items-center justify-between gap-3 w-full pt-1">
             
-            {/* اختيار عدد المدخلات المعروضة (10، 25، 50) */}
             <div className="flex items-center gap-1.5 bg-white px-2.5 py-1.5 rounded-xl border border-gray-200 shadow-sm text-xs text-gray-600">
               <span>أظهر:</span>
               <select 
@@ -456,7 +526,6 @@ export default function LoxxKingInteractiveSystem() {
               <span>مدخلات</span>
             </div>
 
-            {/* شريط البحث الفوري */}
             <div className="flex-1 flex justify-center">
               <input
                 type="text"
@@ -487,7 +556,7 @@ export default function LoxxKingInteractiveSystem() {
 
           </div>
 
-          {/* جدول الطلبات مع التصفية والتقسيم */}
+          {/* جدول الطلبات */}
           <div className="w-full overflow-x-auto pt-1">
             <table className="w-full text-[15px] text-right whitespace-nowrap font-normal">
               <thead>
@@ -553,7 +622,7 @@ export default function LoxxKingInteractiveSystem() {
             </table>
           </div>
 
-          {/* شريط التنقل بين الصفحات (Pagination الفعّال) */}
+          {/* شريط الـ Pagination */}
           <div className="flex items-center justify-between flex-wrap gap-3 pt-3 pb-5 w-full">
             
             <div className="flex items-center gap-1.5 bg-white px-3 py-1.5 rounded-xl border border-gray-200 shadow-sm text-xs text-gray-700 font-semibold">
@@ -565,24 +634,23 @@ export default function LoxxKingInteractiveSystem() {
               <button 
                 onClick={() => setCurrentPage(1)} 
                 disabled={currentPage === 1}
-                className="w-8 h-8 rounded-xl border border-gray-200 bg-white flex items-center justify-center hover:bg-gray-50 text-gray-600 text-xs font-normal disabled:opacity-40"
+                className="w-8 h-8 rounded-xl border border-gray-200 bg-white flex items-center justify-center hover:bg-gray-50 text-gray-600 text-xs font-normal disabled:opacity-40 cursor-pointer"
               >
                 <ChevronsRight size={14} />
               </button>
               <button 
                 onClick={() => setCurrentPage(p => Math.max(1, p - 1))} 
                 disabled={currentPage === 1}
-                className="w-8 h-8 rounded-xl border border-gray-200 bg-white flex items-center justify-center hover:bg-gray-50 text-gray-600 text-xs font-normal disabled:opacity-40"
+                className="w-8 h-8 rounded-xl border border-gray-200 bg-white flex items-center justify-center hover:bg-gray-50 text-gray-600 text-xs font-normal disabled:opacity-40 cursor-pointer"
               >
                 <ChevronRight size={14} />
               </button>
 
-              {/* أرقام الصفحات الحقيقية بناءً على عدد المدخلات */}
               {Array.from({ length: totalPages }, (_, i) => i + 1).map((p) => (
                 <button
                   key={p}
                   onClick={() => setCurrentPage(p)}
-                  className={`w-8 h-8 rounded-xl border text-xs font-normal flex items-center justify-center ${
+                  className={`w-8 h-8 rounded-xl border text-xs font-normal flex items-center justify-center cursor-pointer ${
                     currentPage === p ? 'bg-sky-400 text-white border-sky-400 shadow-sm' : 'border-gray-200 bg-white hover:bg-gray-50 text-gray-600'
                   }`}
                 >
@@ -593,14 +661,14 @@ export default function LoxxKingInteractiveSystem() {
               <button 
                 onClick={() => setCurrentPage(p => Math.min(totalPages, p + 1))} 
                 disabled={currentPage === totalPages}
-                className="w-8 h-8 rounded-xl border border-gray-200 bg-white flex items-center justify-center hover:bg-gray-50 text-gray-600 text-xs font-normal disabled:opacity-40"
+                className="w-8 h-8 rounded-xl border border-gray-200 bg-white flex items-center justify-center hover:bg-gray-50 text-gray-600 text-xs font-normal disabled:opacity-40 cursor-pointer"
               >
                 <ChevronLeft size={14} />
               </button>
               <button 
                 onClick={() => setCurrentPage(totalPages)} 
                 disabled={currentPage === totalPages}
-                className="w-8 h-8 rounded-xl border border-gray-200 bg-white flex items-center justify-center hover:bg-gray-50 text-gray-600 text-xs font-normal disabled:opacity-40"
+                className="w-8 h-8 rounded-xl border border-gray-200 bg-white flex items-center justify-center hover:bg-gray-50 text-gray-600 text-xs font-normal disabled:opacity-40 cursor-pointer"
               >
                 <ChevronsLeft size={14} />
               </button>
@@ -621,13 +689,13 @@ export default function LoxxKingInteractiveSystem() {
             
             <div className="bg-white border-b border-gray-200 px-3 py-2 flex items-center justify-between">
               <div className="flex items-center gap-2">
-                <button onClick={() => setIsHelpChatOpen(false)} className="text-gray-500 hover:text-gray-700 p-1">
+                <button onClick={() => setIsHelpChatOpen(false)} className="text-gray-500 hover:text-gray-700 p-1 cursor-pointer">
                   <X size={18} />
                 </button>
-                <button className="text-gray-500 hover:text-gray-700 p-1">
+                <button className="text-gray-500 hover:text-gray-700 p-1 cursor-pointer">
                   <Trash2 size={18} />
                 </button>
-                <button className="text-gray-500 hover:text-gray-700 p-1">
+                <button className="text-gray-500 hover:text-gray-700 p-1 cursor-pointer">
                   <Search size={18} />
                 </button>
               </div>
@@ -674,7 +742,7 @@ export default function LoxxKingInteractiveSystem() {
             </div>
 
             <form onSubmit={handleSendHelpMessage} className="bg-white border-t border-gray-200 px-3 py-2 flex items-center gap-2">
-              <button type="submit" className="w-8 h-8 rounded-full bg-sky-400 text-white flex items-center justify-center hover:bg-sky-500 shadow flex-shrink-0">
+              <button type="submit" className="w-8 h-8 rounded-full bg-sky-400 text-white flex items-center justify-center hover:bg-sky-500 shadow flex-shrink-0 cursor-pointer">
                 <Send size={14} className="rotate-180" />
               </button>
 
@@ -687,11 +755,11 @@ export default function LoxxKingInteractiveSystem() {
               />
 
               <div className="flex items-center gap-1.5 text-gray-500 flex-shrink-0">
-                <button type="button" className="hover:text-gray-700 p-1"><Smile size={16} /></button>
-                <button type="button" className="hover:text-gray-700 p-1"><Mic size={16} /></button>
-                <button type="button" className="hover:text-gray-700 p-1"><FileText size={16} /></button>
-                <button type="button" className="hover:text-gray-700 p-1"><Image size={16} /></button>
-                <button type="button" className="hover:text-gray-700 p-1"><Paperclip size={16} /></button>
+                <button type="button" className="hover:text-gray-700 p-1 cursor-pointer"><Smile size={16} /></button>
+                <button type="button" className="hover:text-gray-700 p-1 cursor-pointer"><Mic size={16} /></button>
+                <button type="button" className="hover:text-gray-700 p-1 cursor-pointer"><FileText size={16} /></button>
+                <button type="button" className="hover:text-gray-700 p-1 cursor-pointer"><Image size={16} /></button>
+                <button type="button" className="hover:text-gray-700 p-1 cursor-pointer"><Paperclip size={16} /></button>
               </div>
             </form>
 
@@ -700,7 +768,7 @@ export default function LoxxKingInteractiveSystem() {
 
         <button 
           onClick={() => setIsHelpChatOpen(!isHelpChatOpen)}
-          className="w-14 h-14 rounded-full bg-sky-400 text-white shadow-xl flex items-center justify-center hover:bg-sky-500 transition-colors"
+          className="w-14 h-14 rounded-full bg-sky-400 text-white shadow-xl flex items-center justify-center hover:bg-sky-500 transition-colors cursor-pointer"
         >
           <MessageCircle size={22} />
         </button>
