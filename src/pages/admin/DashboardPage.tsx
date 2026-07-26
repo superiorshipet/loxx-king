@@ -6,7 +6,7 @@ import {
   PhoneCall, X, Send, Smile, Mic, Paperclip, Image, Trash2, CheckCheck, ArrowRight, Edit3, Eye, DollarSign, Sparkles
 } from 'lucide-react'
 
-// إنشاء 30 موك داتا (Mock Data) واقعية ومتنوعة
+// إنشاء 30 طلب تجريبي تفصيلي
 const initialOrders = Array.from({ length: 30 }, (_, index) => {
   const id = (69948 - index).toString()
   const names = ['nadeen elebyary', 'محمد أحمد', 'فاطمة علي', 'عمر خالد', 'زينب حسن', 'أحمد محمود', 'سارة عبد الله', 'محمود حسن', 'ريم خالد', 'يوسف محمد']
@@ -76,12 +76,11 @@ const bottomActions = [
   { key: 'entered_data', name: 'البيانات المدخلة' },
 ]
 
-export default function LoxxKingFinalSystem() {
+export default function LoxxKingInteractiveSystem() {
   const [orders] = useState(initialOrders)
   const [selectedOrder, setSelectedOrder] = useState(null)
   const [searchQuery, setSearchQuery] = useState('')
-  const [showStaleToast, setShowStaleToast] = useState(true)
-  const [showLateToast, setShowLateToast] = useState(true)
+  const [itemsPerPage, setItemsPerPage] = useState(10) // عدد العناصر في الصفحة
   const [currentPage, setCurrentPage] = useState(1)
   const [selectedDate, setSelectedDate] = useState('')
   const dateInputRef = useRef(null)
@@ -120,21 +119,25 @@ export default function LoxxKingFinalSystem() {
     setChatMessage('')
   }
 
+  // فلترة الطلبات بناءً على البحث والتاريخ
   const filteredOrders = orders.filter(order => {
     const matchesDate = !selectedDate || order.createdAt === selectedDate;
     const matchesSearch = !searchQuery || 
-      order.receipt.includes(searchQuery) || 
+      order.receipt.toLowerCase().includes(searchQuery.toLowerCase()) || 
       order.customer.toLowerCase().includes(searchQuery.toLowerCase()) || 
       order.phone.includes(searchQuery);
     return matchesDate && matchesSearch;
   });
 
-  const totalPages = 17
+  // حساب الترقيم (Pagination) بناءً على العدد المختار
+  const totalPages = Math.ceil(filteredOrders.length / itemsPerPage) || 1
+  const startIndex = (currentPage - 1) * itemsPerPage
+  const currentTableData = filteredOrders.slice(startIndex, startIndex + itemsPerPage)
 
   return (
     <div dir="rtl" className="min-h-screen w-full bg-white text-gray-900 font-sans relative" style={{ fontFamily: "'NotoNaskhArabic-Regular', Arial, sans-serif" }}>
 
-      {/* ============ الهيدر العلوي ============ */}
+      {/* ============ الهيدر العلوي (مع تفعيل زر العودة للرئيسية عند الضغط على Loxx King) ============ */}
       <header className="relative w-full bg-white px-4 py-1.5 border-b border-gray-200 shadow-md z-30">
         <div className="flex items-center justify-between gap-2 flex-wrap w-full">
           
@@ -146,7 +149,11 @@ export default function LoxxKingFinalSystem() {
             <button className="text-xs font-semibold text-gray-900 hover:text-sky-400 px-2.5 py-1 rounded-lg bg-sky-100 border border-sky-100 shadow-sm transition-all">عرض الأسعار</button>
           </div>
 
-          <div className="absolute left-1/2 -translate-x-1/2 text-lg font-black tracking-wide">
+          {/* زر الشعار للرجوع للرئيسية */}
+          <div 
+            onClick={() => { setSelectedOrder(null); setSearchQuery(''); setCurrentPage(1); }}
+            className="absolute left-1/2 -translate-x-1/2 text-lg font-black tracking-wide cursor-pointer select-none hover:opacity-80 transition-opacity"
+          >
             <span className="text-gray-900">Loxx</span>
             <span className="text-sky-400"> King</span>
           </div>
@@ -173,12 +180,11 @@ export default function LoxxKingFinalSystem() {
       {selectedOrder ? (
         <div className="w-full px-4 py-3 space-y-3 bg-[#f8faf9] min-h-[92vh]">
           
-          {/* شريط التنقل العلوي لصفحة التفاصيل */}
           <div className="flex items-center justify-between bg-white px-4 py-2 rounded-xl border border-gray-200 shadow-sm text-xs">
             <div className="flex items-center gap-3">
               <button 
                 onClick={() => setSelectedOrder(null)}
-                className="flex items-center gap-1 font-bold text-sky-600 bg-sky-50 px-3 py-1 rounded-lg border border-sky-200 hover:bg-sky-100 transition-all"
+                className="flex items-center gap-1 font-bold text-sky-600 bg-sky-50 px-3 py-1 rounded-lg border border-sky-200 hover:bg-sky-100 transition-all cursor-pointer"
               >
                 <ArrowRight size={14} /> رجوع
               </button>
@@ -197,7 +203,6 @@ export default function LoxxKingFinalSystem() {
             </div>
           </div>
 
-          {/* شريط الإجراءات العلوية */}
           <div className="flex flex-wrap items-center gap-1.5 bg-white p-2.5 rounded-xl border border-gray-200 shadow-sm text-xs">
             <button className="px-3 py-1.5 rounded-lg bg-emerald-600 text-white font-bold shadow-sm">إعادة إرسال الطلب</button>
             <button className="px-3 py-1.5 rounded-lg bg-white border border-gray-200 text-gray-700 font-semibold">تعديل حالة الطلب</button>
@@ -213,13 +218,9 @@ export default function LoxxKingFinalSystem() {
             </div>
           </div>
 
-          {/* محتوى التفاصيل */}
           <div className="grid grid-cols-1 lg:grid-cols-3 gap-3">
             
-            {/* القسم الأيمن (ملخص الطلب، معلومات العميل، تفاصيل الطلب، وبيانات إضافية المصغرة) */}
             <div className="space-y-3">
-              
-              {/* ملخص الطلب */}
               <div className="bg-white p-3 rounded-xl border border-gray-200 shadow-sm space-y-2 text-xs">
                 <div className="font-bold text-gray-700">ملخص الطلب</div>
                 <div className="grid grid-cols-3 gap-1 text-center">
@@ -247,7 +248,6 @@ export default function LoxxKingFinalSystem() {
                 </div>
               </div>
 
-              {/* معلومات العميل */}
               <div className="bg-white p-3 rounded-xl border border-gray-200 shadow-sm space-y-1.5 text-xs">
                 <div className="flex justify-between items-center font-bold text-gray-700">
                   <span>معلومات العميل</span>
@@ -266,7 +266,6 @@ export default function LoxxKingFinalSystem() {
                 </div>
               </div>
 
-              {/* تفاصيل الطلب */}
               <div className="bg-white p-3 rounded-xl border border-gray-200 shadow-sm space-y-1.5 text-xs">
                 <div className="font-bold text-gray-700">تفاصيل الطلب</div>
                 <div className="space-y-1">
@@ -275,7 +274,6 @@ export default function LoxxKingFinalSystem() {
                 </div>
               </div>
 
-              {/* ================= بيانات إضافية (مصغرة ومرتبة) ================= */}
               <div className="bg-white p-3 rounded-xl border border-gray-200 shadow-sm space-y-2 text-xs">
                 <div className="flex items-center justify-between border-b border-gray-100 pb-1.5">
                   <span className="text-emerald-700 font-bold">بيانات إضافية 🟩</span>
@@ -314,10 +312,7 @@ export default function LoxxKingFinalSystem() {
 
             </div>
 
-            {/* القسم الأيسر (صورة الحجز والتواصل وسجل المراحل) */}
             <div className="lg:col-span-2 space-y-3">
-              
-              {/* صور الطلب والواصل */}
               <div className="bg-white p-3.5 rounded-xl border border-gray-200 shadow-sm space-y-2.5">
                 <div className="flex items-center justify-between text-xs font-bold text-gray-700 border-b border-gray-100 pb-1.5">
                   <span className="text-emerald-700 flex items-center gap-1">🖼️ صور الطلب والتواصل</span>
@@ -325,7 +320,6 @@ export default function LoxxKingFinalSystem() {
 
                 <div className="grid grid-cols-1 md:grid-cols-3 gap-3 items-center">
                   
-                  {/* صورة تثبيت الحجز (على اليمين) */}
                   <div className="border border-gray-200 rounded-xl p-2.5 bg-gray-50 flex flex-col items-center justify-center relative">
                     <div className="absolute top-2 right-2 text-[10px] text-gray-600 font-bold flex items-center gap-1">
                       <span>صورة تثبيت الحجز</span>
@@ -339,7 +333,6 @@ export default function LoxxKingFinalSystem() {
                     </div>
                   </div>
 
-                  {/* أزرار التواصل والإجراءات (على اليسار) */}
                   <div className="md:col-span-2 space-y-2">
                     <div className="text-xs font-bold text-gray-600 flex items-center justify-end gap-1">
                       <span>التواصل والإجراءات</span>
@@ -375,7 +368,6 @@ export default function LoxxKingFinalSystem() {
                 </div>
               </div>
 
-              {/* سجل مراحل الطلب */}
               <div className="bg-white p-3 rounded-xl border border-gray-200 shadow-sm space-y-2">
                 <div className="flex items-center justify-between text-xs font-bold text-gray-700">
                   <div className="flex items-center gap-2">
@@ -409,7 +401,7 @@ export default function LoxxKingFinalSystem() {
 
         </div>
       ) : (
-        /* ============ الشاشة الرئيسية (تحتوي الآن على 30 طلب مع ترقيم متطور) ============ */
+        /* ============ الشاشة الرئيسية ============ */
         <main className="w-full px-4 py-1.5 space-y-1">
 
           <div className="text-center font-bold text-sky-400 text-xs tracking-wide w-full">
@@ -446,11 +438,17 @@ export default function LoxxKingFinalSystem() {
             ))}
           </div>
 
+          {/* شريط التحكم والبحث وعدد المدخلات */}
           <div className="flex items-center justify-between gap-3 w-full pt-1">
             
+            {/* اختيار عدد المدخلات المعروضة (10، 25، 50) */}
             <div className="flex items-center gap-1.5 bg-white px-2.5 py-1.5 rounded-xl border border-gray-200 shadow-sm text-xs text-gray-600">
               <span>أظهر:</span>
-              <select className="bg-transparent font-normal outline-none cursor-pointer text-xs">
+              <select 
+                value={itemsPerPage}
+                onChange={(e) => { setItemsPerPage(Number(e.target.value)); setCurrentPage(1); }}
+                className="bg-transparent font-semibold outline-none cursor-pointer text-xs"
+              >
                 <option value={10}>10</option>
                 <option value={25}>25</option>
                 <option value={50}>50</option>
@@ -458,13 +456,14 @@ export default function LoxxKingFinalSystem() {
               <span>مدخلات</span>
             </div>
 
+            {/* شريط البحث الفوري */}
             <div className="flex-1 flex justify-center">
               <input
                 type="text"
-                placeholder="بحث..."
+                placeholder="ابحث برقم الوصل، اسم الزبون، أو رقم الهاتف..."
                 value={searchQuery}
-                onChange={(e) => setSearchQuery(e.target.value)}
-                className="w-120 h-7 px-4 rounded bg-white border border-gray-200 text-xs outline-none shadow-sm text-right"
+                onChange={(e) => { setSearchQuery(e.target.value); setCurrentPage(1); }}
+                className="w-96 h-7 px-4 rounded bg-white border border-gray-200 text-xs outline-none shadow-sm text-right font-medium"
               />
             </div>
 
@@ -477,7 +476,7 @@ export default function LoxxKingFinalSystem() {
                 ref={dateInputRef}
                 type="date"
                 value={selectedDate}
-                onChange={(e) => setSelectedDate(e.target.value)}
+                onChange={(e) => { setSelectedDate(e.target.value); setCurrentPage(1); }}
                 aria-label="فلتر حسب التاريخ"
                 className="bg-transparent text-xs outline-none text-black w-28 text-right font-normal cursor-pointer"
               />
@@ -488,6 +487,7 @@ export default function LoxxKingFinalSystem() {
 
           </div>
 
+          {/* جدول الطلبات مع التصفية والتقسيم */}
           <div className="w-full overflow-x-auto pt-1">
             <table className="w-full text-[15px] text-right whitespace-nowrap font-normal">
               <thead>
@@ -510,76 +510,98 @@ export default function LoxxKingFinalSystem() {
                 </tr>
               </thead>
               <tbody className="divide-y divide-gray-100">
-                {filteredOrders.map((order) => (
-                  <tr 
-                    key={order.receipt} 
-                    onClick={() => setSelectedOrder(order)}
-                    className="hover:bg-sky-50/50 transition-colors cursor-pointer"
-                  >
-                    <td className="px-2 py-1.5 font-mono text-sky-600 font-normal underline">{order.receipt}</td>
-                    <td className="px-2 py-1.5 text-gray-700">{order.employee}</td>
-                    <td className="px-2 py-1.5 text-gray-800">{order.customer}</td>
-                    <td className="px-2 py-1.5 font-mono text-sky-600" dir="ltr">{order.phone}</td>
-                    <td className="px-2 py-1.5 text-gray-500">{order.createdAt}</td>
-                    <td className="px-2 py-1.5 text-gray-700">{order.country}</td>
-                    <td className="px-2 py-1.5 text-gray-700">{order.city}</td>
-                    <td className="px-2 py-1.5 text-gray-500">{order.pageType}</td>
-                    <td className="px-2 py-1.5 text-gray-800">{order.store}</td>
-                    <td className="px-2 py-1.5 text-gray-500">{order.shipping}</td>
-                    <td className="px-2 py-1.5 text-gray-500">{order.lastUpdate}</td>
-                    <td className="px-2 py-1.5 text-center">
-                      <span className={`inline-block px-1.5 py-0.5 rounded text-[10px] font-normal ${statusStyles[order.status] || 'bg-gray-50 text-gray-600'}`}>
-                        {order.status}
-                      </span>
-                    </td>
-                    <td className="px-2 py-1.5 text-amber-600" dir="ltr">{order.subTotal}</td>
-                    <td className="px-2 py-1.5">
-                      <span className="inline-flex items-center gap-1 text-[10px] text-sky-700 bg-sky-50 border border-sky-300 px-1.5 py-0.5 rounded font-normal">
-                        <PhoneCall size={10} /> واتساب
-                      </span>
-                    </td>
-                    <td className="px-2 py-1.5 text-center">
-                      <Package size={14} className="text-gray-400 inline-block" />
-                    </td>
+                {currentTableData.length > 0 ? (
+                  currentTableData.map((order) => (
+                    <tr 
+                      key={order.receipt} 
+                      onClick={() => setSelectedOrder(order)}
+                      className="hover:bg-sky-50/50 transition-colors cursor-pointer"
+                    >
+                      <td className="px-2 py-1.5 font-mono text-sky-600 font-normal underline">{order.receipt}</td>
+                      <td className="px-2 py-1.5 text-gray-700">{order.employee}</td>
+                      <td className="px-2 py-1.5 text-gray-800">{order.customer}</td>
+                      <td className="px-2 py-1.5 font-mono text-sky-600" dir="ltr">{order.phone}</td>
+                      <td className="px-2 py-1.5 text-gray-500">{order.createdAt}</td>
+                      <td className="px-2 py-1.5 text-gray-700">{order.country}</td>
+                      <td className="px-2 py-1.5 text-gray-700">{order.city}</td>
+                      <td className="px-2 py-1.5 text-gray-500">{order.pageType}</td>
+                      <td className="px-2 py-1.5 text-gray-800">{order.store}</td>
+                      <td className="px-2 py-1.5 text-gray-500">{order.shipping}</td>
+                      <td className="px-2 py-1.5 text-gray-500">{order.lastUpdate}</td>
+                      <td className="px-2 py-1.5 text-center">
+                        <span className={`inline-block px-1.5 py-0.5 rounded text-[10px] font-normal ${statusStyles[order.status] || 'bg-gray-50 text-gray-600'}`}>
+                          {order.status}
+                        </span>
+                      </td>
+                      <td className="px-2 py-1.5 text-amber-600" dir="ltr">{order.subTotal}</td>
+                      <td className="px-2 py-1.5">
+                        <span className="inline-flex items-center gap-1 text-[10px] text-sky-700 bg-sky-50 border border-sky-300 px-1.5 py-0.5 rounded font-normal">
+                          <PhoneCall size={10} /> واتساب
+                        </span>
+                      </td>
+                      <td className="px-2 py-1.5 text-center">
+                        <Package size={14} className="text-gray-400 inline-block" />
+                      </td>
+                    </tr>
+                  ))
+                ) : (
+                  <tr>
+                    <td colSpan="15" className="text-center py-6 text-gray-400 text-xs">لا توجد طلبات مطابقة للبحث</td>
                   </tr>
-                ))}
+                )}
               </tbody>
             </table>
           </div>
 
+          {/* شريط التنقل بين الصفحات (Pagination الفعّال) */}
           <div className="flex items-center justify-between flex-wrap gap-3 pt-3 pb-5 w-full">
             
             <div className="flex items-center gap-1.5 bg-white px-3 py-1.5 rounded-xl border border-gray-200 shadow-sm text-xs text-gray-700 font-semibold">
-              <span>عدد الطلبات:</span>
+              <span>عدد الطلبات المتاحة:</span>
               <span className="text-sky-600 font-bold">{filteredOrders.length}</span>
             </div>
 
             <div className="flex items-center gap-1.5 mx-auto">
-              <button onClick={() => setCurrentPage(1)} className="w-8 h-8 rounded-xl border border-gray-200 bg-white flex items-center justify-center hover:bg-gray-50 text-gray-600 text-xs font-normal">
+              <button 
+                onClick={() => setCurrentPage(1)} 
+                disabled={currentPage === 1}
+                className="w-8 h-8 rounded-xl border border-gray-200 bg-white flex items-center justify-center hover:bg-gray-50 text-gray-600 text-xs font-normal disabled:opacity-40"
+              >
                 <ChevronsRight size={14} />
               </button>
-              <button onClick={() => setCurrentPage(p => Math.max(1, p - 1))} className="w-8 h-8 rounded-xl border border-gray-200 bg-white flex items-center justify-center hover:bg-gray-50 text-gray-600 text-xs font-normal">
+              <button 
+                onClick={() => setCurrentPage(p => Math.max(1, p - 1))} 
+                disabled={currentPage === 1}
+                className="w-8 h-8 rounded-xl border border-gray-200 bg-white flex items-center justify-center hover:bg-gray-50 text-gray-600 text-xs font-normal disabled:opacity-40"
+              >
                 <ChevronRight size={14} />
               </button>
-              {[1, 2, 3, '...', 15, 16, 17].map((p, idx) =>
-                p === '...' ? (
-                  <span key={idx} className="w-8 h-8 flex items-center justify-center text-gray-400 text-xs font-normal">…</span>
-                ) : (
-                  <button
-                    key={idx}
-                    onClick={() => setCurrentPage(p)}
-                    className={`w-8 h-8 rounded-xl border text-xs font-normal flex items-center justify-center ${
-                      currentPage === p ? 'bg-sky-400 text-white border-sky-400' : 'border-gray-200 bg-white hover:bg-gray-50 text-gray-600'
-                    }`}
-                  >
-                    {p}
-                  </button>
-                )
-              )}
-              <button onClick={() => setCurrentPage(p => Math.min(totalPages, p + 1))} className="w-8 h-8 rounded-xl border border-gray-200 bg-white flex items-center justify-center hover:bg-gray-50 text-gray-600 text-xs font-normal">
+
+              {/* أرقام الصفحات الحقيقية بناءً على عدد المدخلات */}
+              {Array.from({ length: totalPages }, (_, i) => i + 1).map((p) => (
+                <button
+                  key={p}
+                  onClick={() => setCurrentPage(p)}
+                  className={`w-8 h-8 rounded-xl border text-xs font-normal flex items-center justify-center ${
+                    currentPage === p ? 'bg-sky-400 text-white border-sky-400 shadow-sm' : 'border-gray-200 bg-white hover:bg-gray-50 text-gray-600'
+                  }`}
+                >
+                  {p}
+                </button>
+              ))}
+
+              <button 
+                onClick={() => setCurrentPage(p => Math.min(totalPages, p + 1))} 
+                disabled={currentPage === totalPages}
+                className="w-8 h-8 rounded-xl border border-gray-200 bg-white flex items-center justify-center hover:bg-gray-50 text-gray-600 text-xs font-normal disabled:opacity-40"
+              >
                 <ChevronLeft size={14} />
               </button>
-              <button onClick={() => setCurrentPage(totalPages)} className="w-8 h-8 rounded-xl border border-gray-200 bg-white flex items-center justify-center hover:bg-gray-50 text-gray-600 text-xs font-normal">
+              <button 
+                onClick={() => setCurrentPage(totalPages)} 
+                disabled={currentPage === totalPages}
+                className="w-8 h-8 rounded-xl border border-gray-200 bg-white flex items-center justify-center hover:bg-gray-50 text-gray-600 text-xs font-normal disabled:opacity-40"
+              >
                 <ChevronsLeft size={14} />
               </button>
             </div>
