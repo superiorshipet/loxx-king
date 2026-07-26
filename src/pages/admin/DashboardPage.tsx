@@ -1,274 +1,780 @@
-import { useState, useEffect } from 'react'
-import { Link, useLocation } from 'react-router-dom'
-import { 
-  Search, ChevronDown, MessageCircle, FileText, 
-  MapPin, Store, Truck, Calendar, Users, Package, 
-  ShoppingBag, Tags, Gift, Star, MessageSquare, Bell, ClipboardList, X, CheckCircle, AlertTriangle, 
-  TrendingUp
+import { useState, useRef, useEffect } from 'react'
+import { Link, useNavigate } from 'react-router-dom'
+import {
+  Menu, Plus, Store, Search, Package, Tag, Truck, Users, Clock,
+  Globe, MapPin, FileText, Wallet, ChevronLeft, ChevronRight,
+  ChevronsLeft, ChevronsRight, MessageCircle, Database, Filter, Hash, UserCheck, Building2,
+  PhoneCall, X, Send, Smile, Mic, Paperclip, Image, Trash2, CheckCheck, ArrowRight, Edit3, Eye, DollarSign, Sparkles,
+  LayoutDashboard, ShoppingBag, Gift, Star, Bell, ClipboardList, LogOut, MessageSquare
 } from 'lucide-react'
-import { AdminLayout } from '../../components/layout/AdminLayout'
 import { useApp } from '../../context/AppContext'
 
-const initialOrders = [
-  { id: '69943', customer: 'MR AHMD', phone: '07654657689', date: '2026-07-25', countryEn: 'Iraq', countryAr: 'العراق', cityEn: 'Mosul', cityAr: 'الموصل', source: 'فيسبوك', store: 'Lotus Blue', shipping: 'شركة صندوق التوصيل', statusEn: 'New Order', statusAr: 'طلب جديد', amount: '100,000 IQD', chat: 'meta' },
-  { id: '69942', customer: 'Nadeen elebyary', phone: '05386466663', date: '2026-07-25', countryEn: 'Turkey', countryAr: 'تركيا', cityEn: 'Istanbul', cityAr: 'اسطنبول', source: 'فيسبوك', store: 'Lavva الالمانية', shipping: 'surat', statusEn: 'Delivering', statusAr: 'قيد التسليم', amount: '800,000 TRY', chat: 'meta' },
-  { id: '69941', customer: 'Ahmed', phone: '07543216785', date: '2026-07-24', countryEn: 'Iraq', countryAr: 'العراق', cityEn: 'Baghdad', cityAr: 'بغداد', source: 'فيسبوك', store: 'Lotus Blue', shipping: 'شركة صندوق التوصيل', statusEn: 'New Order', statusAr: 'طلب جديد', amount: '50,000 IQD', chat: 'meta' },
-  { id: '69940', customer: 'Yjityrrfj', phone: '0555555555', date: '2026-07-23', countryEn: 'UAE', countryAr: 'الإمارات', cityEn: 'Abu Dhabi', cityAr: 'أبو ظبي', source: 'واتساب', store: 'Lotus Blue', shipping: 'شركة المها للتوصيل', statusEn: 'New Order', statusAr: 'طلب جديد', amount: '500 AED', chat: 'whatsapp' },
-  { id: '69939', customer: 'asd asd', phone: '07654328999', date: '2026-07-22', countryEn: 'Iraq', countryAr: 'العراق', cityEn: 'Baghdad', cityAr: 'بغداد', source: 'فيسبوك', store: 'MOON LIGHT', shipping: 'شركة صندوق التوصيل', statusEn: 'New Order', statusAr: 'طلب جديد', amount: '90,000 IQD', chat: 'meta' },
+// إنشاء 30 طلب تجريبي تفصيلي
+const initialOrders = Array.from({ length: 30 }, (_, index) => {
+  const id = (69948 - index).toString()
+  const names = ['nadeen elebyary', 'محمد أحمد', 'فاطمة علي', 'عمر خالد', 'زينب حسن', 'أحمد محمود', 'سارة عبد الله', 'محمود حسن', 'ريم خالد', 'يوسف محمد']
+  const cities = ['بغداد', 'الموصل', 'البصرة', 'أربيل', 'النجف', 'كربلاء', 'اسطنبول', 'دبي']
+  const countries = ['العراق', 'الإمارات', 'تركيا']
+  const stores = ['MOON LIGHT', 'Lotus Blue', 'FLARE', 'Hayat Cosmetics']
+  const statuses = ['طلب جديد', 'قيد الاعتماد', 'تم التجهيز', 'قيد التوصيل']
+  
+  return {
+    receipt: id,
+    employee: index % 2 === 0 ? 'Nadeen Moelebyary' : 'Ahmed',
+    customer: names[index % names.length],
+    phone: `07${Math.floor(100000000 + Math.random() * 900000000)}`,
+    createdAt: index < 5 ? '2026-07-26' : `2026-07-${String(20 - (index % 15)).padStart(2, '0')}`,
+    country: countries[index % countries.length],
+    city: cities[index % cities.length],
+    address: 'شارع الرئيسي، عمارة 4',
+    pageType: index % 2 === 0 ? 'فيسبوك' : 'انستقرام',
+    store: stores[index % stores.length],
+    shipping: 'شركة صندوق التوصيل',
+    lastUpdate: '2026-07-26',
+    status: statuses[index % statuses.length],
+    subTotal: `${(index + 5) * 5000}.00 IQD`,
+    deliveryCost: '4000.00 IQD',
+    netAmount: `${(index + 5) * 5000 - 1000}.00 IQD`,
+    paymentType: index % 2 === 0 ? 'دفع كاش' : 'بطاقة',
+    deliveryPriceForCustomer: 'IQD 600.00',
+    entriesCount: '1',
+    products: [
+      { name: 'توب باودر 01', qty: '1', img: '📦' },
+      { name: 'توب باودر 02', qty: '1', img: '📦' }
+    ]
+  }
+})
+
+const statusStyles = {
+  'قيد الاعتماد': 'bg-amber-50 text-amber-700 border border-amber-300',
+  'طلب جديد': 'bg-cyan-50 text-cyan-700 border border-cyan-300',
+  'تم التجهيز': 'bg-emerald-50 text-emerald-700 border border-emerald-300',
+  'قيد التوصيل': 'bg-yellow-50 text-yellow-700 border border-yellow-300',
+  'تم التوصيل': 'bg-green-50 text-green-700 border border-green-300',
+  'الطلبات الغير مكتملة': 'bg-rose-50 text-rose-700 border border-rose-300',
+}
+
+const topNotifications = [
+  { key: 'approvals', name: 'الاعتمادات', count: 2 },
+  { key: 'leads', name: 'الطلبات المحتملة' },
+  { key: 'staff_errors', name: 'أخطاء الموظفين', count: 9 },
+  { key: 'required_edits', name: 'التعديلات المطلوبة', count: 13 },
+  { key: 'reports', name: 'الإبلاغات', count: 13 },
+  { key: 'required_tasks', name: 'المهام المطلوبة' },
 ]
 
-export default function DashboardPage() {
-  const { lang, isAdmin } = useApp()
-  const location = useLocation()
-  const [selectedOrder, setSelectedOrder] = useState<any>(null)
-  const [orders, setOrders] = useState(initialOrders)
-  const [activeFilters, setActiveFilters] = useState<Record<string, string>>({})
+const gridFilters = [
+  { key: 'status',     name: 'فلترة حسب الحالة',        icon: Filter },
+  { key: 'country',    name: 'تصفية حسب الدولة',        icon: Globe },
+  { key: 'city',       name: 'تصفية حسب المدينة',       icon: MapPin },
+  { key: 'product',    name: 'فلترة حسب المنتج',        icon: Package },
+]
 
-  const menuItems = [
-    { type: 'link', path: '/admin/orders', nameEn: 'Orders', nameAr: 'الطلبات', icon: ShoppingBag },
-    { type: 'link', path: '/admin/products', nameEn: 'Products', nameAr: 'المنتجات', icon: Package },
-    { type: 'link', path: '/admin/categories', nameEn: 'Categories', nameAr: 'الفئات', icon: Tags },
-    { type: 'link', path: '/admin/offers', nameEn: 'Offers', nameAr: 'العروض', icon: Gift },
-    { type: 'link', path: '/admin/reviews', nameEn: 'Reviews', nameAr: 'التقييمات', icon: Star },
-    { type: 'link', path: '/admin/chat', nameEn: 'Support Chat', nameAr: 'دردشة الدعم', icon: MessageSquare },
-    { type: 'link', path: '/admin/invoices', nameEn: 'Invoices', nameAr: 'الفواتير', icon: FileText },
-    { type: 'link', path: '/admin/notifications', nameEn: 'Notifications', nameAr: 'الإشعارات', icon: Bell },
-    {type: 'link', path: '/admin/operations', nameEn: 'Operations Center', nameAr: 'مركز العمليات', icon: TrendingUp },
-    ...(isAdmin ? [{ type: 'link', path: '/admin/logs', nameEn: 'Edit Logs', nameAr: 'سجل التعديلات', icon: ClipboardList }] : []),
+const bottomActions = [
+  { key: 'download', name: 'تنزيل الطلبات' },
+  { key: 'verification', name: 'قيد التحقق', count: 43 },
+  { key: 'status_update', name: 'تحديث الحالات', count: 58 },
+  { key: 'complaints', name: 'إدارة الشكاوي' },
+  { key: 'leads', name: 'العملاء المحتملون' },
+  { key: 'entered_data', name: 'البيانات المدخلة' },
+]
 
-    // كل فلتر ليه "key" هو نفسه اسم الـ query param اللي هيتبعت للباك اند
-    { type: 'filter', key: 'order',   nameEn: 'Filter by Order',    nameAr: 'فلترة حسب الطلب',        icon: Search },
-    { type: 'filter', key: 'courier', nameEn: 'Filter by Courier',  nameAr: 'تصفية حسب شركة التوصيل', icon: Truck },
-    { type: 'filter', key: 'city',    nameEn: 'Filter by City',     nameAr: 'تصفية حسب المدينة',      icon: MapPin },
-    { type: 'filter', key: 'page',    nameEn: 'Filter by Page',     nameAr: 'فلترة حسب الصفحة',       icon: FileText },
-    { type: 'filter', key: 'product', nameEn: 'Filter by Product',  nameAr: 'فلترة حسب المنتج',       icon: Package },
-    { type: 'filter', key: 'last10',  nameEn: 'Last 10 Operations', nameAr: 'آخر 10 عمليات',          icon: Calendar },
-  ]
+// قائمة الروابط الموجودة في النظام للوصول لباقي الصفحات عبر السلايدر
+const sidebarNavItems = [
+  { to: '/admin', icon: LayoutDashboard, label: 'لوحة التحكم' },
+  { to: '/admin/orders', icon: ShoppingBag, label: 'الطلبات' },
+  { to: '/admin/products', icon: Package, label: 'المنتجات' },
+  { to: '/admin/categories', icon: Tag, label: 'الفئات' },
+  { to: '/admin/offers', icon: Gift, label: 'العروض' },
+  { to: '/admin/reviews', icon: Star, label: 'التقييمات' },
+  { to: '/admin/chat', icon: MessageSquare, label: 'دردشة الدعم' },
+  { to: '/admin/invoices', icon: FileText, label: 'الفواتير' },
+  { to: '/admin/notifications', icon: Bell, label: 'الإشعارات' },
+]
 
-  // كل ما activeFilters يتغيّر، ابعت الطلب لـ endpoint الطلبات
+export default function LoxxKingInteractiveSystemWithSidebar() {
+  const navigate = useNavigate()
+  const { lang, user } = useApp()
+  const [orders] = useState(initialOrders)
+  const [selectedOrder, setSelectedOrder] = useState(null)
+  const [searchQuery, setSearchQuery] = useState('')
+  const [itemsPerPage, setItemsPerPage] = useState(10)
+  const [currentPage, setCurrentPage] = useState(1)
+  const [selectedDate, setSelectedDate] = useState('')
+  const [isSidebarOpen, setIsSidebarOpen] = useState(false)
+  const dateInputRef = useRef(null)
+
+  // حالات شات مركز المساعدة
+  const [isHelpChatOpen, setIsHelpChatOpen] = useState(false)
+  const [chatMessage, setChatMessage] = useState('')
+  const [chatMessages, setChatMessages] = useState([
+    { id: 1, sender: 'Nadeen Test Call Center', time: '٠٣:٠١ م', text: '@@الكل\nبلاغ عن مشكلة في الطلب رقم #69941\nتيست', isOwn: false },
+    { id: 2, sender: 'Nadeen Moelebyary', time: '٠٣:٠٢ م', text: '@@AHMED\nبلاغ عن مشكلة في الطلب رقم #69941\nتيست', isOwn: false },
+    { id: 3, sender: 'AHMED', time: '٠١:٢٧ ص', text: '@@AHMED\nبلاغ عن مشكلة في الطلب رقم #69932\nمشكله عدلها فورا\nمرفقات البلاغ:\nhttps://wassimadmin-001-site1.jtempurl.com/images/orderposts/0a1ae9de-c3d5-496b-a51e-7289450861cc.png', isOwn: true },
+    { id: 4, sender: 'تنبيه تلقائي', time: '١٠:٥٨ ص', text: '@@AHMED تذكير دوري لفريق الكول سنتر: يرجى متابعة التعليقات السلبية أولاً بأول، وتقييمها واتخاذ الإجراء اللازم دون تأخير.', isOwn: false, isSystem: true }
+  ])
+  const chatScrollRef = useRef(null)
+
   useEffect(() => {
-    const params = new URLSearchParams(activeFilters).toString()
-    fetch(`/api/orders${params ? `?${params}` : ''}`)
-      .then(res => res.json())
-      .then(data => setOrders(data))
-      .catch(err => console.error('Filter fetch failed:', err))
-  }, [activeFilters])
+    if (isHelpChatOpen && chatScrollRef.current) {
+      chatScrollRef.current.scrollTop = chatScrollRef.current.scrollHeight
+    }
+  }, [isHelpChatOpen, chatMessages])
 
-  // دالة بسيطة تحدث فلتر واحد — تستخدمها جوه dropdown كل فلتر بعدين
-  function updateFilter(key: string, value: string) {
-    setActiveFilters(prev => ({ ...prev, [key]: value }))
+  const handleSendHelpMessage = (e) => {
+    e.preventDefault()
+    if (!chatMessage.trim()) return
+
+    setChatMessages(prev => [
+      ...prev,
+      {
+        id: Date.now(),
+        sender: 'AHMED',
+        time: new Date().toLocaleTimeString('ar-EG', { hour: '2-digit', minute: '2-digit' }),
+        text: chatMessage,
+        isOwn: true
+      }
+    ])
+    setChatMessage('')
   }
 
+  // فلترة الطلبات بناءً على البحث والتاريخ
+  const filteredOrders = orders.filter(order => {
+    const matchesDate = !selectedDate || order.createdAt === selectedDate;
+    const matchesSearch = !searchQuery || 
+      order.receipt.toLowerCase().includes(searchQuery.toLowerCase()) || 
+      order.customer.toLowerCase().includes(searchQuery.toLowerCase()) || 
+      order.phone.includes(searchQuery);
+    return matchesDate && matchesSearch;
+  });
+
+  // حساب الترقيم (Pagination)
+  const totalPages = Math.ceil(filteredOrders.length / itemsPerPage) || 1
+  const startIndex = (currentPage - 1) * itemsPerPage
+  const currentTableData = filteredOrders.slice(startIndex, startIndex + itemsPerPage)
+
   return (
-    <AdminLayout>
-      <div className="w-full max-w-7xl mx-auto space-y-3 pb-8">
+    <div dir="rtl" className="min-h-screen w-full bg-white text-gray-900 font-sans relative" style={{ fontFamily: "'NotoNaskhArabic-Regular', Arial, sans-serif" }}>
 
-        {/* اللوجو في النص، أعلى الصفحة مباشرة بمسافة أقل من فوق */}
+      {/* ============ الهيدر العلوي ============ */}
+      <header className="relative w-full bg-white px-4 py-1.5 border-b border-gray-200 shadow-md z-30">
+        <div className="flex items-center justify-between gap-2 flex-wrap w-full">
+          
+          <div dir="rtl" className="flex items-center gap-2">
+            <button 
+              onClick={() => setIsSidebarOpen(true)}
+              className="w-7 h-7 rounded-lg flex items-center justify-center bg-gray-50 text-gray-600 hover:bg-gray-100 shadow-sm border border-gray-200 cursor-pointer"
+            >
+              <Menu size={15} />
+            </button>
+            <button onClick={() => navigate('/admin/products')} className="text-xs font-semibold text-gray-900 hover:text-sky-400 px-2.5 py-1 rounded-lg bg-sky-100 border border-sky-100 shadow-sm transition-all cursor-pointer">عرض المنتجات</button>
+            <button onClick={() => navigate('/admin/offers')} className="text-xs font-semibold text-gray-900 hover:text-sky-400 px-2.5 py-1 rounded-lg bg-sky-100 border border-sky-100 shadow-sm transition-all cursor-pointer">عرض الأسعار</button>
+          </div>
 
-        {/* التابات والفلاتر — متوسطة، من غير فريم أو بوردر حواليها */}
-        <div dir="rtl" className="flex flex-wrap justify-center gap-1.5">
-          {menuItems.map((item, idx) => {
-            const label = lang === 'ar' ? item.nameAr : item.nameEn
+          <div 
+            onClick={() => { setSelectedOrder(null); setSearchQuery(''); setCurrentPage(1); }}
+            className="absolute left-1/2 -translate-x-1/2 text-lg font-black tracking-wide cursor-pointer select-none hover:opacity-80 transition-opacity"
+          >
+            <span className="text-gray-900">Loxx</span>
+            <span className="text-sky-400"> King</span>
+          </div>
 
-            if (item.type === 'link') {
-              const isActive = location.pathname === item.path
-              return (
-                <Link
-                  key={item.path}
-                  to={item.path}
-                  className={`flex items-center justify-between w-[calc(16.666%-6px)] px-2 py-1.5 rounded-lg border border-brand text-brand hover:bg-brand hover:text-[#0E0E11] transition-all text-[10px] font-semibold tap-group ${
-                    isActive ? 'bg-brand text-[#0E0E11] shadow' : 'bg-brand/10'
-                  }`}
-                >
-                  <div className="flex items-center gap-1 truncate">
-                    <item.icon size={12} className="opacity-90 flex-shrink-0" />
-                    <span className="truncate">{label}</span>
-                  </div>
-                </Link>
-              )
-            }
-
-            return (
+          <div dir="rtl" className="flex items-center gap-1.5 flex-wrap">
+            {topNotifications.map((n) => (
               <button
-                key={item.key}
-                onClick={() => {/* TODO: افتح dropdown القيم، وبعدين updateFilter(item.key, value) */}}
-                className="flex items-center justify-between w-[calc(16.666%-6px)] px-2 py-1.5 rounded-lg border border-brand bg-brand/10 text-brand hover:bg-brand hover:text-[#0E0E11] transition-all text-[10px] font-semibold tap-group"
+                key={n.key}
+                className="relative flex items-center gap-1 px-3 py-1.5 rounded-full bg-sky-100 border border-sky-100 text-gray-900 text-xs font-semibold hover:border-sky-400 hover:shadow transition-all shadow-sm cursor-pointer"
               >
-                <div className="flex items-center gap-1 truncate">
-                  <item.icon size={12} className="opacity-90 flex-shrink-0" />
-                  <span className="truncate">{label}</span>
-                </div>
-                <ChevronDown size={11} className="opacity-80 flex-shrink-0 ms-1" />
+                {n.name}
+                {n.count !== undefined && (
+                  <span className="absolute -top-1.5 -right-1.5 bg-rose-500 text-white text-[9px] font-bold w-4 h-4 rounded-full flex items-center justify-center shadow-sm">
+                    {n.count}
+                  </span>
+                )}
               </button>
-            )
-          })}
-        </div>
-
-        {/* CRM Data Table */}
-        <div className="bg-card rounded-xl border border-border shadow-sm overflow-hidden">
-          <div className="overflow-x-auto no-scrollbar">
-            <table className="w-full text-[11px] sm:text-xs text-start whitespace-nowrap">
-              <thead className="bg-muted/50 text-muted-foreground uppercase">
-                <tr>
-                  <th className="px-3 py-2.5 font-bold text-start">{lang === 'ar' ? 'رقم الطلب' : 'Order #'}</th>
-                  <th className="px-3 py-2.5 font-bold text-start">{lang === 'ar' ? 'العميل' : 'Customer'}</th>
-                  <th className="px-3 py-2.5 font-bold text-start">{lang === 'ar' ? 'رقم الهاتف' : 'Phone'}</th>
-                  <th className="px-3 py-2.5 font-bold text-start">{lang === 'ar' ? 'التاريخ' : 'Date'}</th>
-                  <th className="px-3 py-2.5 font-bold text-start">{lang === 'ar' ? 'الدولة' : 'Country'}</th>
-                  <th className="px-3 py-2.5 font-bold text-start">{lang === 'ar' ? 'المدينة' : 'City'}</th>
-                  <th className="px-3 py-2.5 font-bold text-start">{lang === 'ar' ? 'المتجر' : 'Store'}</th>
-                  <th className="px-3 py-2.5 font-bold text-start">{lang === 'ar' ? 'شركة التوصيل' : 'Courier'}</th>
-                  <th className="px-3 py-2.5 font-bold text-center">{lang === 'ar' ? 'الحالة' : 'Status'}</th>
-                  <th className="px-3 py-2.5 font-bold text-start">{lang === 'ar' ? 'المبلغ' : 'Amount'}</th>
-                  <th className="px-3 py-2.5 font-bold text-center">{lang === 'ar' ? 'مراسلة' : 'Chat'}</th>
-                </tr>
-              </thead>
-              <tbody className="divide-y divide-border">
-                {orders.map((order, idx) => (
-                  <tr 
-                    key={idx} 
-                    onClick={() => setSelectedOrder(order)}
-                    className="hover:bg-brand/10 transition-colors cursor-pointer"
-                  >
-                    <td className="px-3 py-2 font-mono text-brand font-bold underline">{order.id}</td>
-                    <td className="px-3 py-2 font-bold">{order.customer}</td>
-                    <td className="px-3 py-2 font-mono text-brand font-bold" dir="ltr">{order.phone}</td>
-                    <td className="px-3 py-2 text-muted-foreground">{order.date}</td>
-                    <td className="px-3 py-2">{lang === 'ar' ? order.countryAr : order.countryEn}</td>
-                    <td className="px-3 py-2">{lang === 'ar' ? order.cityAr : order.cityEn}</td>
-                    <td className="px-3 py-2 text-muted-foreground">{order.store}</td>
-                    <td className="px-3 py-2 text-muted-foreground">{order.shipping}</td>
-                    <td className="px-3 py-2 text-center">
-                      <span className={`inline-block px-2 py-0.5 rounded text-[10px] font-bold ${
-                        order.statusEn === 'Delivering' 
-                          ? 'bg-red-500/10 text-red-500' 
-                          : 'bg-brand/10 text-brand'
-                      }`}>
-                        {lang === 'ar' ? order.statusAr : order.statusEn}
-                      </span>
-                    </td>
-                    <td className="px-3 py-2 font-bold text-amber-500" dir="ltr">{order.amount}</td>
-                    <td className="px-3 py-2 text-center">
-                      {order.chat === 'meta' ? (
-                        <button className="inline-flex items-center gap-1 text-[10px] font-bold text-blue-600 bg-blue-50 border border-blue-200 px-2 py-0.5 rounded-md">
-                          <MessageCircle size={12} /> Meta
-                        </button>
-                      ) : (
-                        <button className="inline-flex items-center gap-1 text-[10px] font-bold text-green-600 bg-green-50 border border-green-200 px-2 py-0.5 rounded-md">
-                          <MessageCircle size={12} /> WhatsApp
-                        </button>
-                      )}
-                    </td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
+            ))}
           </div>
         </div>
+      </header>
 
-        {/* نافذة تفاصيل الطلب الكاملة (Modal) */}
-        {selectedOrder && (
-          <div className="fixed inset-0 bg-black/60 backdrop-blur-sm z-50 flex items-center justify-center p-4 overflow-y-auto">
-            <div className="bg-card w-full max-w-4xl rounded-2xl border-2 border-brand/70 shadow-2xl overflow-hidden animate-fade-in">
-              
-              <div className="bg-brand/10 px-6 py-4 border-b border-border flex items-center justify-between">
-                <div className="flex items-center gap-3">
-                  <span className="text-sm font-bold text-brand bg-brand/20 px-3 py-1 rounded-lg">
-                    {lang === 'ar' ? `تفاصيل الطلب #${selectedOrder.id}` : `Order Details #${selectedOrder.id}`}
+      {/* ============ السلايدر الجانبي (Sidebar Drawer) لربط بقية الصفحات ============ */}
+      {isSidebarOpen && (
+        <div className="fixed inset-0 z-50 flex">
+          <div 
+            onClick={() => setIsSidebarOpen(false)}
+            className="fixed inset-0 bg-black/50 backdrop-blur-xs transition-opacity"
+          ></div>
+
+          <div className="relative w-72 bg-white h-full shadow-2xl border-l border-gray-200 flex flex-col z-50 animate-in slide-in-from-right duration-200 text-right">
+            
+            <div className="p-4 border-b border-gray-200 flex items-center justify-between bg-gray-50">
+              <div className="flex items-center gap-2">
+                <span className="text-base font-black text-gray-900">Loxx</span>
+                <span className="text-base font-black text-sky-400">King</span>
+              </div>
+              <button 
+                onClick={() => setIsSidebarOpen(false)}
+                className="w-7 h-7 rounded-lg bg-white border border-gray-200 flex items-center justify-center text-gray-500 hover:text-gray-900 shadow-sm cursor-pointer"
+              >
+                <X size={16} />
+              </button>
+            </div>
+
+            <div className="flex-1 overflow-y-auto p-3 space-y-1.5">
+              {sidebarNavItems.map((item, idx) => (
+                <button
+                  key={idx}
+                  onClick={() => { setIsSidebarOpen(false); navigate(item.to); }}
+                  className="w-full flex items-center gap-3 px-3.5 py-2.5 rounded-xl text-xs font-bold text-gray-700 hover:bg-sky-50 hover:text-sky-600 transition-all cursor-pointer"
+                >
+                  <item.icon size={18} />
+                  <span>{item.label}</span>
+                </button>
+              ))}
+            </div>
+
+            <div className="p-3 border-t border-gray-200">
+              <button 
+                onClick={() => setIsSidebarOpen(false)}
+                className="w-full flex items-center gap-2 px-3.5 py-2.5 rounded-xl text-xs font-bold text-gray-500 hover:bg-gray-100 transition-colors cursor-pointer"
+              >
+                <LogOut size={16} />
+                <span>إغلاق القائمة</span>
+              </button>
+            </div>
+
+          </div>
+        </div>
+      )}
+
+      {/* ============ شاشة تفاصيل الطلب ============ */}
+      {selectedOrder ? (
+        <div className="w-full px-4 py-3 space-y-3 bg-[#f8faf9] min-h-[92vh]">
+          
+          <div className="flex items-center justify-between bg-white px-4 py-2 rounded-xl border border-gray-200 shadow-sm text-xs">
+            <div className="flex items-center gap-3">
+              <button 
+                onClick={() => setSelectedOrder(null)}
+                className="flex items-center gap-1 font-bold text-sky-600 bg-sky-50 px-3 py-1 rounded-lg border border-sky-200 hover:bg-sky-100 transition-all cursor-pointer"
+              >
+                <ArrowRight size={14} /> رجوع
+              </button>
+              <span className="font-semibold text-gray-500">سجل التعديلات</span>
+            </div>
+            
+            <div className="font-bold text-gray-700">تفاصيل الطلب</div>
+
+            <div className="flex items-center gap-4">
+              <span className="text-gray-500 cursor-pointer hover:text-sky-600">ملاحظة الطلب</span>
+              <span className="text-gray-500 cursor-pointer hover:text-sky-600">تبليغ عن تعديل فوري</span>
+              <span className="relative text-rose-600 font-bold cursor-pointer">
+                الإبلاغ عن مشكلة
+                <span className="absolute -top-2 -right-3 bg-rose-500 text-white text-[9px] w-4 h-4 rounded-full flex items-center justify-center">1</span>
+              </span>
+            </div>
+          </div>
+
+          <div className="flex flex-wrap items-center gap-1.5 bg-white p-2.5 rounded-xl border border-gray-200 shadow-sm text-xs">
+            <button className="px-3 py-1.5 rounded-lg bg-emerald-600 text-white font-bold shadow-sm cursor-pointer">إعادة إرسال الطلب</button>
+            <button className="px-3 py-1.5 rounded-lg bg-white border border-gray-200 text-gray-700 font-semibold cursor-pointer">تعديل حالة الطلب</button>
+            <button className="px-3 py-1.5 rounded-lg bg-white border border-gray-200 text-gray-700 font-semibold cursor-pointer">تم معالجة الطلب</button>
+            <button className="px-3 py-1.5 rounded-lg bg-white border border-gray-200 text-gray-700 font-semibold cursor-pointer">تعديل الطلب لتحويله لتقييمات أمر</button>
+            <button className="px-3 py-1.5 rounded-lg bg-white border border-gray-200 text-gray-700 font-semibold cursor-pointer">تعيين الموظف</button>
+            <button className="px-3 py-1.5 rounded-lg bg-white border border-gray-200 text-gray-700 font-semibold cursor-pointer">تعيين شركة التوصيل</button>
+            <button className="px-3 py-1.5 rounded-lg bg-white border border-gray-200 text-gray-700 font-semibold cursor-pointer">تأجيل الطلب</button>
+
+            <div className="mr-auto flex items-center gap-3">
+              <span className="text-emerald-700 font-bold bg-emerald-50 px-2.5 py-1 rounded-md border border-emerald-200">{selectedOrder.status}</span>
+              <span className="text-gray-500 font-mono" dir="ltr">{selectedOrder.employee}@gmail.com CES</span>
+            </div>
+          </div>
+
+          <div className="grid grid-cols-1 lg:grid-cols-3 gap-3">
+            
+            <div className="space-y-3">
+              <div className="bg-white p-3 rounded-xl border border-gray-200 shadow-sm space-y-2 text-xs">
+                <div className="font-bold text-gray-700">ملخص الطلب</div>
+                <div className="grid grid-cols-3 gap-1 text-center">
+                  <div className="p-1.5 rounded-lg bg-gray-50 border border-gray-100">
+                    <p className="text-[9px] text-gray-500">المجموع الكلي</p>
+                    <p className="font-bold text-gray-900 mt-0.5">{selectedOrder.subTotal}</p>
+                  </div>
+                  <div className="p-1.5 rounded-lg bg-gray-50 border border-gray-100">
+                    <p className="text-[9px] text-gray-500">تكلفة التوصيل</p>
+                    <p className="font-bold text-gray-900 mt-0.5">{selectedOrder.deliveryCost}</p>
+                  </div>
+                  <div className="p-1.5 rounded-lg bg-gray-50 border border-gray-100">
+                    <p className="text-[9px] text-gray-500">المبلغ المتبقي</p>
+                    <p className="font-bold text-sky-600 mt-0.5">{selectedOrder.netAmount}</p>
+                  </div>
+                </div>
+
+                <div className="space-y-1 pt-1">
+                  <div className="flex justify-between items-center text-gray-600"><span className="flex items-center gap-1"><Truck size={12}/> الشركة المصنعة</span><span className="font-bold text-black">MOON LIGHT</span></div>
+                  <div className="flex justify-between items-center text-gray-600"><span className="flex items-center gap-1"><Building2 size={12}/> الشركة المرسلة</span><span className="font-bold text-black">شركة صندوق التوصيل</span></div>
+                  <div className="flex justify-between items-center pt-1 border-t border-gray-100">
+                    <span className="text-gray-500">طريقة الدفع</span>
+                    <span className="px-2.5 py-0.5 rounded-md bg-rose-600 text-white font-bold text-[10px]">{selectedOrder.paymentType}</span>
+                  </div>
+                </div>
+              </div>
+
+              <div className="bg-white p-3 rounded-xl border border-gray-200 shadow-sm space-y-1.5 text-xs">
+                <div className="flex justify-between items-center font-bold text-gray-700">
+                  <span>معلومات العميل</span>
+                  <Edit3 size={12} className="text-amber-500 cursor-pointer" />
+                </div>
+                <div className="space-y-1">
+                  <div className="flex justify-between border-b border-gray-100 pb-0.5"><span className="text-gray-500">اسم العميل</span><span className="font-bold">{selectedOrder.customer}</span></div>
+                  <div className="flex justify-between border-b border-gray-100 pb-0.5"><span className="text-gray-500">الدولة</span><span className="font-bold flex items-center gap-1"><span>🇮🇶</span> العراق</span></div>
+                  <div className="flex justify-between border-b border-gray-100 pb-0.5"><span className="text-gray-500">المدينة</span><span className="font-bold">{selectedOrder.city}</span></div>
+                  <div className="flex justify-between border-b border-gray-100 pb-0.5"><span className="text-gray-500">العنوان</span><span className="font-bold">{selectedOrder.address}</span></div>
+                  <div className="flex justify-between border-b border-gray-100 pb-0.5 items-center"><span className="text-gray-500">الهاتف</span><span className="font-mono text-sky-600 font-bold" dir="ltr">{selectedOrder.phone}</span></div>
+                  <div className="flex justify-between items-center pt-0.5">
+                    <span className="text-gray-500">الجنس</span>
+                    <span className="px-2.5 py-0.5 rounded bg-amber-400 text-white font-bold text-[10px]">أنثى</span>
+                  </div>
+                </div>
+              </div>
+
+              <div className="bg-white p-3 rounded-xl border border-gray-200 shadow-sm space-y-1.5 text-xs">
+                <div className="font-bold text-gray-700">تفاصيل الطلب</div>
+                <div className="space-y-1">
+                  <div className="flex justify-between items-center border-b border-gray-100 pb-0.5"><span className="text-gray-500">كود الشحنة</span><span className="px-2 py-0.5 rounded bg-sky-600 text-white font-mono font-bold text-[10px]">{selectedOrder.receipt}</span></div>
+                  <div className="flex justify-between items-center"><span className="text-gray-500">اسم الصفحة</span><span className="font-bold text-gray-800">فيسبوك</span></div>
+                </div>
+              </div>
+
+              <div className="bg-white p-3 rounded-xl border border-gray-200 shadow-sm space-y-2 text-xs">
+                <div className="flex items-center justify-between border-b border-gray-100 pb-1.5">
+                  <span className="text-emerald-700 font-bold">بيانات إضافية 🟩</span>
+                </div>
+
+                <div className="flex items-center justify-between">
+                  <span className="text-gray-600 font-medium">سعر التوصيل للعميل</span>
+                  <span className="bg-emerald-50 border border-emerald-200 text-emerald-800 font-bold px-2 py-0.5 rounded-lg text-[11px]" dir="ltr">
+                    {selectedOrder.deliveryPriceForCustomer}
                   </span>
-                  <span className="text-xs text-muted-foreground">{selectedOrder.date}</span>
                 </div>
-                <button 
-                  onClick={() => setSelectedOrder(null)}
-                  className="p-1.5 rounded-lg bg-muted text-muted-foreground hover:text-foreground hover:bg-muted-foreground/20 transition-colors"
-                >
-                  <X size={18} />
-                </button>
-              </div>
 
-              <div className="p-6 space-y-6 max-h-[80vh] overflow-y-auto no-scrollbar">
-                
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
-                  <div className="bg-amber-500/10 border border-amber-500/30 p-3 rounded-xl flex items-center gap-3">
-                    <AlertTriangle className="text-amber-500 flex-shrink-0" size={20} />
-                    <span className="text-xs font-semibold text-amber-600 dark:text-amber-400">
-                      {lang === 'ar' ? 'تنبيه: الطلب متوقف منذ أكثر من 24 ساعة لم يتم تجهيزه' : 'Alert: Order pending for > 24 hours'}
-                    </span>
-                  </div>
-                  <div className="bg-blue-500/10 border border-blue-500/30 p-3 rounded-xl flex items-center gap-3">
-                    <CheckCircle className="text-blue-500 flex-shrink-0" size={20} />
-                    <span className="text-xs font-semibold text-blue-600 dark:text-blue-400">
-                      {lang === 'ar' ? `حالة الطلب الحالي: ${selectedOrder.statusAr}` : `Current Status: ${selectedOrder.statusEn}`}
-                    </span>
+                <div className="flex items-center justify-between">
+                  <span className="text-gray-600 font-medium">الإدخالات</span>
+                  <span className="font-bold text-gray-900">{selectedOrder.entriesCount}</span>
+                </div>
+
+                <div className="space-y-1 pt-1 border-t border-gray-100">
+                  <span className="text-gray-600 font-medium">تفاصيل الطلب</span>
+                  <div className="space-y-1">
+                    {selectedOrder.products.map((prod, idx) => (
+                      <div key={idx} className="flex items-center justify-between p-1.5 rounded-lg border border-gray-100 bg-gray-50 text-[11px]">
+                        <div className="w-6 h-6 rounded bg-white flex items-center justify-center text-xs shadow-sm">
+                          {prod.img}
+                        </div>
+                        <span className="font-bold text-gray-800 flex-1 text-right px-2">{prod.name}</span>
+                        <div className="w-5 h-5 rounded border border-gray-200 flex items-center justify-center font-bold text-gray-700 bg-white text-[10px]">
+                          {prod.qty}
+                        </div>
+                      </div>
+                    ))}
                   </div>
                 </div>
 
-                <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                  <div className="bg-muted/40 p-4 rounded-xl border border-border space-y-2">
-                    <h4 className="text-xs font-bold text-brand uppercase">{lang === 'ar' ? 'معلومات العميل' : 'Customer Info'}</h4>
-                    <p className="text-xs font-bold">{selectedOrder.customer}</p>
-                    <p className="text-xs text-muted-foreground" dir="ltr">{selectedOrder.phone}</p>
-                    <p className="text-xs">{lang === 'ar' ? selectedOrder.countryAr : selectedOrder.countryEn} - {lang === 'ar' ? selectedOrder.cityAr : selectedOrder.cityEn}</p>
-                  </div>
-
-                  <div className="bg-muted/40 p-4 rounded-xl border border-border space-y-2">
-                    <h4 className="text-xs font-bold text-brand uppercase">{lang === 'ar' ? 'التوصيل والمتجر' : 'Shipping & Store'}</h4>
-                    <p className="text-xs"><span className="text-muted-foreground">{lang === 'ar' ? 'المتجر:' : 'Store:'}</span> <strong className="text-foreground">{selectedOrder.store}</strong></p>
-                    <p className="text-xs"><span className="text-muted-foreground">{lang === 'ar' ? 'شركة الشحن:' : 'Courier:'}</span> <strong className="text-foreground">{selectedOrder.shipping}</strong></p>
-                    <p className="text-xs"><span className="text-muted-foreground">{lang === 'ar' ? 'مصدر الطلب:' : 'Source:'}</span> <strong className="text-foreground">{selectedOrder.source}</strong></p>
-                  </div>
-
-                  <div className="bg-brand/5 p-4 rounded-xl border border-brand/30 space-y-2">
-                    <h4 className="text-xs font-bold text-brand uppercase">{lang === 'ar' ? 'ملخص الطلب' : 'Order Summary'}</h4>
-                    <div className="flex justify-between text-xs">
-                      <span className="text-muted-foreground">{lang === 'ar' ? 'المبلغ الإجمالي:' : 'Total Amount:'}</span>
-                      <strong className="text-amber-500 text-sm" dir="ltr">{selectedOrder.amount}</strong>
-                    </div>
-                    <div className="flex justify-between text-xs pt-2 border-t border-border">
-                      <span className="text-muted-foreground">{lang === 'ar' ? 'طريقة الدفع:' : 'Payment:'}</span>
-                      <strong className="text-brand">Cash on Delivery</strong>
-                    </div>
-                  </div>
-                </div>
-
-                <div className="bg-muted/30 p-4 rounded-xl border border-border flex flex-wrap items-center justify-between gap-3">
-                  <div className="flex items-center gap-2">
-                    <button className="px-3 py-2 bg-brand text-[#0E0E11] font-bold text-xs rounded-lg shadow hover:opacity-90 transition-opacity">
-                      {lang === 'ar' ? 'تعديل حالة الطلب' : 'Update Status'}
-                    </button>
-                    <button className="px-3 py-2 bg-muted border border-border font-bold text-xs rounded-lg hover:bg-muted-foreground/10 transition-colors">
-                      {lang === 'ar' ? 'إعادة إرسال الطلب' : 'Resend Order'}
-                    </button>
-                  </div>
-                  <div className="flex items-center gap-2">
-                    {selectedOrder.chat === 'meta' ? (
-                      <span className="inline-flex items-center gap-1.5 text-xs font-bold text-blue-600 bg-blue-50 border border-blue-200 px-3 py-1.5 rounded-lg">
-                        <MessageCircle size={14} /> Meta Chat Active
-                      </span>
-                    ) : (
-                      <span className="inline-flex items-center gap-1.5 text-xs font-bold text-green-600 bg-green-50 border border-green-200 px-3 py-1.5 rounded-lg">
-                        <MessageCircle size={14} /> WhatsApp Chat Active
-                      </span>
-                    )}
-                  </div>
-                </div>
-
-              </div>
-
-              <div className="bg-muted/40 px-6 py-3 border-t border-border flex justify-end">
-                <button 
-                  onClick={() => setSelectedOrder(null)}
-                  className="px-4 py-2 bg-brand text-[#0E0E11] font-bold text-xs rounded-xl hover:opacity-90 transition-opacity"
-                >
-                  {lang === 'ar' ? 'إغلاق' : 'Close'}
-                </button>
               </div>
 
             </div>
+
+            <div className="lg:col-span-2 space-y-3">
+              <div className="bg-white p-3.5 rounded-xl border border-gray-200 shadow-sm space-y-2.5">
+                <div className="flex items-center justify-between text-xs font-bold text-gray-700 border-b border-gray-100 pb-1.5">
+                  <span className="text-emerald-700 flex items-center gap-1">🖼️ صور الطلب والتواصل</span>
+                </div>
+
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-3 items-center">
+                  
+                  <div className="border border-gray-200 rounded-xl p-2.5 bg-gray-50 flex flex-col items-center justify-center relative">
+                    <div className="absolute top-2 right-2 text-[10px] text-gray-600 font-bold flex items-center gap-1">
+                      <span>صورة تثبيت الحجز</span>
+                      <Eye size={12} className="text-emerald-600" />
+                    </div>
+                    <div className="absolute top-2 left-2 text-gray-400">
+                      <ArrowRight size={12} className="rotate-45" />
+                    </div>
+                    <div className="w-20 h-20 rounded-full bg-gray-200 flex items-center justify-center text-gray-400 mt-4 shadow-inner">
+                      <Users size={32} />
+                    </div>
+                  </div>
+
+                  <div className="md:col-span-2 space-y-2">
+                    <div className="text-xs font-bold text-gray-600 flex items-center justify-end gap-1">
+                      <span>التواصل والإجراءات</span>
+                      <Sparkles size={12} className="text-sky-500" />
+                    </div>
+
+                    <div className="flex flex-wrap items-center justify-end gap-1.5">
+                      <button className="px-3 py-1 rounded-lg bg-teal-600 text-white text-[11px] font-bold shadow-sm cursor-pointer">سحب الفاتورة</button>
+                      <button className="px-3 py-1 rounded-lg bg-white border border-gray-300 text-gray-900 text-[11px] font-bold flex items-center gap-1 cursor-pointer">
+                        <span className="text-blue-600 font-black">Meta</span>
+                      </button>
+                      <button className="px-3 py-1 rounded-lg bg-emerald-600 text-white text-[11px] font-bold flex items-center gap-1 shadow-sm cursor-pointer">
+                        <PhoneCall size={11} /> WhatsApp
+                      </button>
+                    </div>
+
+                    <div className="flex flex-wrap items-center justify-end gap-1.5">
+                      <button className="px-3 py-1 rounded-lg bg-sky-50 border border-sky-300 text-sky-700 text-[11px] font-bold flex items-center gap-1 cursor-pointer">
+                        <span>الطلب المربوط بمركز المساعدة</span>
+                        <span className="bg-blue-600 text-white text-[9px] px-1.5 py-0.1 rounded-full">0</span>
+                      </button>
+                      <button className="px-3 py-1 rounded-lg bg-emerald-50 border border-emerald-300 text-emerald-700 text-[11px] font-bold flex items-center gap-1 cursor-pointer">
+                        <span>الإعجاب بالمنتج</span>
+                        👍
+                      </button>
+                      <button className="px-3 py-1 rounded-lg bg-rose-50 border border-rose-300 text-rose-700 text-[11px] font-bold flex items-center gap-1 cursor-pointer">
+                        <span>إرسال شكوى</span>
+                        ⚠️
+                      </button>
+                    </div>
+                  </div>
+
+                </div>
+              </div>
+
+              <div className="bg-white p-3 rounded-xl border border-gray-200 shadow-sm space-y-2">
+                <div className="flex items-center justify-between text-xs font-bold text-gray-700">
+                  <div className="flex items-center gap-2">
+                    <span className="text-gray-400 font-normal">إخفاء الطلب من الجدول</span>
+                    <input type="checkbox" className="toggle toggle-sm cursor-pointer" />
+                  </div>
+                  <span>سجل مراحل الطلب ⏱️</span>
+                </div>
+
+                <div className="p-2 rounded-lg border border-gray-100 bg-gray-50 flex items-center justify-between text-xs">
+                  <Trash2 size={14} className="text-rose-500 cursor-pointer" />
+                  <div className="w-6 h-6 rounded-full bg-sky-500 text-white flex items-center justify-center shadow">
+                    <CheckCheck size={12} />
+                  </div>
+                  <div className="text-gray-600 font-mono text-[10px]">NADEEN MOELEBY...</div>
+                  <div className="text-left font-mono text-[10px] text-gray-500">
+                    <p className="text-sky-600">2026/07/26</p>
+                    <p>02:46</p>
+                  </div>
+                  <div className="text-right">
+                    <p className="font-bold text-gray-900 text-[11px]">طلب جديد</p>
+                    <p className="text-[9px] text-gray-500">الطلب قيد الانتظار للتجهيز</p>
+                  </div>
+                  <span className="w-5 h-5 rounded-full bg-sky-500 text-white flex items-center justify-center font-bold text-[10px]">✓</span>
+                </div>
+              </div>
+
+            </div>
+
+          </div>
+
+        </div>
+      ) : (
+        /* ============ الشاشة الرئيسية ============ */
+        <main className="w-full px-4 py-1.5 space-y-1">
+
+          <div className="text-center font-bold text-sky-400 text-xs tracking-wide w-full">
+            AHMED
+          </div>
+
+          <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-1.5 max-w-[1100px] mx-auto">
+            {gridFilters.map((item) => (
+              <button
+                key={item.key}
+                className="flex items-center justify-start gap-2 px-0.5 py-0.5 rounded bg-white border border-gray-200 text-black hover:border-sky-400 transition-all text-xs font-normal shadow-sm overflow-hidden cursor-pointer"
+              >
+                <div className="w-5 h-5 rounded-full bg-sky-400 text-white flex items-center justify-center flex-shrink-0 shadow-sm">
+                  <item.icon size={18} />
+                </div>
+                <span className="truncate" style={{ textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{item.name}</span>
+              </button>
+            ))}
+          </div>
+
+          <div className="flex flex-wrap items-center justify-center gap-1.5 py-0.5 w-full">
+            {bottomActions.map((action) => (
+              <button
+                key={action.key}
+                className="relative px-3.5 py-1.5 rounded-full bg-white border border-gray-200 text-yellow-500 text-xs font-semibold shadow-sm hover:border-sky-400 transition-all cursor-pointer"
+              >
+                {action.name}
+                {action.count !== undefined && (
+                  <span className="absolute -top-1.5 -start-1.5 bg-rose-500 text-white text-[10px] w-5 h-5 rounded-full flex items-center justify-center font-bold shadow">
+                    {action.count}
+                  </span>
+                )}
+              </button>
+            ))}
+          </div>
+
+          {/* شريط التحكم والبحث وعدد المدخلات */}
+          <div className="flex items-center justify-between gap-3 w-full pt-1">
+            
+            <div className="flex items-center gap-1.5 bg-white px-2.5 py-1.5 rounded-xl border border-gray-200 shadow-sm text-xs text-gray-600">
+              <span>أظهر:</span>
+              <select 
+                value={itemsPerPage}
+                onChange={(e) => { setItemsPerPage(Number(e.target.value)); setCurrentPage(1); }}
+                className="bg-transparent font-semibold outline-none cursor-pointer text-xs"
+              >
+                <option value={10}>10</option>
+                <option value={25}>25</option>
+                <option value={50}>50</option>
+              </select>
+              <span>مدخلات</span>
+            </div>
+
+            <div className="flex-1 flex justify-center">
+              <input
+                type="text"
+                placeholder="ابحث برقم الوصل، اسم الزبون، أو رقم الهاتف..."
+                value={searchQuery}
+                onChange={(e) => { setSearchQuery(e.target.value); setCurrentPage(1); }}
+                className="w-96 h-7 px-4 rounded bg-white border border-gray-200 text-xs outline-none shadow-sm text-right font-medium"
+              />
+            </div>
+
+            <div 
+              onClick={() => dateInputRef.current?.showPicker?.()} 
+              className="flex items-center gap-1.5 bg-gray-100 px-2.5 py-1.5 rounded border border-gray-300 shadow-sm cursor-pointer select-none relative"
+            >
+              <span className="text-xs text-gray-500">📅</span>
+              <input
+                ref={dateInputRef}
+                type="date"
+                value={selectedDate}
+                onChange={(e) => { setSelectedDate(e.target.value); setCurrentPage(1); }}
+                aria-label="فلتر حسب التاريخ"
+                className="bg-transparent text-xs outline-none text-black w-28 text-right font-normal cursor-pointer"
+              />
+              {!selectedDate && (
+                <span className="absolute text-xs text-gray-500 pointer-events-none right-7 bg-gray-100 px-1">فلتر حسب التاريخ</span>
+              )}
+            </div>
+
+          </div>
+
+          {/* جدول الطلبات */}
+          <div className="w-full overflow-x-auto pt-1">
+            <table className="w-full text-[15px] text-right whitespace-nowrap font-normal">
+              <thead>
+                <tr className="text-gray-400 uppercase border-b border-gray-200 bg-gray-50/50">
+                  <th className="px-2 py-2 font-normal">رقم الوصل</th>
+                  <th className="px-2 py-1.5 font-normal">اسم الموظف</th>
+                  <th className="px-2 py-1.5 font-normal">اسم الزبون</th>
+                  <th className="px-2 py-1.5 font-normal">رقم الهاتف</th>
+                  <th className="px-2 py-1.5 font-normal">تاريخ الأنشاء</th>
+                  <th className="px-2 py-1.5 font-normal">الدولة</th>
+                  <th className="px-2 py-1.5 font-normal">المدينة</th>
+                  <th className="px-2 py-1.5 font-normal">نوع الصفحة</th>
+                  <th className="px-2 py-1.5 font-normal">المتجر</th>
+                  <th className="px-2 py-1.5 font-normal">شركة التوصيل</th>
+                  <th className="px-2 py-1.5 font-normal">اخر تحديث</th>
+                  <th className="px-2 py-1.5 font-normal text-center">حالة الطلب</th>
+                  <th className="px-2 py-1.5 font-normal">قيمة المبلغ</th>
+                  <th className="px-2 py-1.5 font-normal">مراسلة</th>
+                  <th className="px-2 py-1.5 font-normal text-center">المنتجات</th>
+                </tr>
+              </thead>
+              <tbody className="divide-y divide-gray-100">
+                {currentTableData.length > 0 ? (
+                  currentTableData.map((order) => (
+                    <tr 
+                      key={order.receipt} 
+                      onClick={() => setSelectedOrder(order)}
+                      className="hover:bg-sky-50/50 transition-colors cursor-pointer"
+                    >
+                      <td className="px-2 py-1.5 font-mono text-sky-600 font-normal underline">{order.receipt}</td>
+                      <td className="px-2 py-1.5 text-gray-700">{order.employee}</td>
+                      <td className="px-2 py-1.5 text-gray-800">{order.customer}</td>
+                      <td className="px-2 py-1.5 font-mono text-sky-600" dir="ltr">{order.phone}</td>
+                      <td className="px-2 py-1.5 text-gray-500">{order.createdAt}</td>
+                      <td className="px-2 py-1.5 text-gray-700">{order.country}</td>
+                      <td className="px-2 py-1.5 text-gray-700">{order.city}</td>
+                      <td className="px-2 py-1.5 text-gray-500">{order.pageType}</td>
+                      <td className="px-2 py-1.5 text-gray-800">{order.store}</td>
+                      <td className="px-2 py-1.5 text-gray-500">{order.shipping}</td>
+                      <td className="px-2 py-1.5 text-gray-500">{order.lastUpdate}</td>
+                      <td className="px-2 py-1.5 text-center">
+                        <span className={`inline-block px-1.5 py-0.5 rounded text-[10px] font-normal ${statusStyles[order.status] || 'bg-gray-50 text-gray-600'}`}>
+                          {order.status}
+                        </span>
+                      </td>
+                      <td className="px-2 py-1.5 text-amber-600" dir="ltr">{order.subTotal}</td>
+                      <td className="px-2 py-1.5">
+                        <span className="inline-flex items-center gap-1 text-[10px] text-sky-700 bg-sky-50 border border-sky-300 px-1.5 py-0.5 rounded font-normal">
+                          <PhoneCall size={10} /> واتساب
+                        </span>
+                      </td>
+                      <td className="px-2 py-1.5 text-center">
+                        <Package size={14} className="text-gray-400 inline-block" />
+                      </td>
+                    </tr>
+                  ))
+                ) : (
+                  <tr>
+                    <td colSpan="15" className="text-center py-6 text-gray-400 text-xs">لا توجد طلبات مطابقة للبحث</td>
+                  </tr>
+                )}
+              </tbody>
+            </table>
+          </div>
+
+          {/* شريط الـ Pagination */}
+          <div className="flex items-center justify-between flex-wrap gap-3 pt-3 pb-5 w-full">
+            
+            <div className="flex items-center gap-1.5 bg-white px-3 py-1.5 rounded-xl border border-gray-200 shadow-sm text-xs text-gray-700 font-semibold">
+              <span>عدد الطلبات المتاحة:</span>
+              <span className="text-sky-600 font-bold">{filteredOrders.length}</span>
+            </div>
+
+            <div className="flex items-center gap-1.5 mx-auto">
+              <button 
+                onClick={() => setCurrentPage(1)} 
+                disabled={currentPage === 1}
+                className="w-8 h-8 rounded-xl border border-gray-200 bg-white flex items-center justify-center hover:bg-gray-50 text-gray-600 text-xs font-normal disabled:opacity-40 cursor-pointer"
+              >
+                <ChevronsRight size={14} />
+              </button>
+              <button 
+                onClick={() => setCurrentPage(p => Math.max(1, p - 1))} 
+                disabled={currentPage === 1}
+                className="w-8 h-8 rounded-xl border border-gray-200 bg-white flex items-center justify-center hover:bg-gray-50 text-gray-600 text-xs font-normal disabled:opacity-40 cursor-pointer"
+              >
+                <ChevronRight size={14} />
+              </button>
+
+              {Array.from({ length: totalPages }, (_, i) => i + 1).map((p) => (
+                <button
+                  key={p}
+                  onClick={() => setCurrentPage(p)}
+                  className={`w-8 h-8 rounded-xl border text-xs font-normal flex items-center justify-center cursor-pointer ${
+                    currentPage === p ? 'bg-sky-400 text-white border-sky-400 shadow-sm' : 'border-gray-200 bg-white hover:bg-gray-50 text-gray-600'
+                  }`}
+                >
+                  {p}
+                </button>
+              ))}
+
+              <button 
+                onClick={() => setCurrentPage(p => Math.min(totalPages, p + 1))} 
+                disabled={currentPage === totalPages}
+                className="w-8 h-8 rounded-xl border border-gray-200 bg-white flex items-center justify-center hover:bg-gray-50 text-gray-600 text-xs font-normal disabled:opacity-40 cursor-pointer"
+              >
+                <ChevronLeft size={14} />
+              </button>
+              <button 
+                onClick={() => setCurrentPage(totalPages)} 
+                disabled={currentPage === totalPages}
+                className="w-8 h-8 rounded-xl border border-gray-200 bg-white flex items-center justify-center hover:bg-gray-50 text-gray-600 text-xs font-normal disabled:opacity-40 cursor-pointer"
+              >
+                <ChevronsLeft size={14} />
+              </button>
+            </div>
+
+            <div className="w-20"></div>
+
+          </div>
+
+        </main>
+      )}
+
+      {/* ================= زر شات "مركز المساعدة" العائم ================= */}
+      <div className="fixed bottom-6 right-6 z-50">
+        
+        {isHelpChatOpen && (
+          <div className="absolute bottom-16 right-0 w-[380px] h-[550px] bg-white rounded-2xl shadow-2xl border border-gray-200 flex flex-col overflow-hidden animate-in fade-in zoom-in-95 duration-150">
+            
+            <div className="bg-white border-b border-gray-200 px-3 py-2 flex items-center justify-between">
+              <div className="flex items-center gap-2">
+                <button onClick={() => setIsHelpChatOpen(false)} className="text-gray-500 hover:text-gray-700 p-1 cursor-pointer">
+                  <X size={18} />
+                </button>
+                <button className="text-gray-500 hover:text-gray-700 p-1 cursor-pointer">
+                  <Trash2 size={18} />
+                </button>
+                <button className="text-gray-500 hover:text-gray-700 p-1 cursor-pointer">
+                  <Search size={18} />
+                </button>
+              </div>
+
+              <div className="flex items-center gap-2 text-right">
+                <div>
+                  <h3 className="text-xs font-bold text-gray-900">مركز المساعدة</h3>
+                  <p className="text-[10px] text-gray-500">178 عضو</p>
+                </div>
+                <div className="w-9 h-9 rounded-full bg-sky-50 border border-sky-200 flex items-center justify-center text-sky-600 font-bold text-xs shadow-sm">
+                  LX
+                </div>
+              </div>
+            </div>
+
+            <div ref={chatScrollRef} className="flex-1 overflow-y-auto p-3 space-y-3 bg-[#fdfdfd] text-xs">
+              <div className="text-center my-1">
+                <span className="bg-gray-200/70 text-gray-600 text-[10px] px-2.5 py-1 rounded-full font-medium">٢٠ يوليو ٢٠٢٦</span>
+              </div>
+
+              {chatMessages.map((msg) => (
+                <div key={msg.id} className={`flex flex-col ${msg.isOwn ? 'items-end' : 'items-start'}`}>
+                  <div className="flex items-baseline gap-1.5 mb-0.5">
+                    <span className="text-[10px] text-gray-400">{msg.time}</span>
+                    <span className={`text-[11px] font-bold ${msg.isSystem ? 'text-sky-700' : 'text-sky-800'}`}>{msg.sender}</span>
+                  </div>
+                  
+                  <div className={`p-2.5 rounded-xl max-w-[88%] shadow-sm whitespace-pre-wrap leading-relaxed ${
+                    msg.isOwn 
+                      ? 'bg-sky-50 text-gray-900 rounded-tl-sm border border-sky-200' 
+                      : msg.isSystem 
+                        ? 'bg-sky-50/60 text-gray-900 rounded-tr-sm border border-sky-200' 
+                        : 'bg-white text-gray-900 rounded-tr-sm border border-gray-200'
+                  }`}>
+                    {msg.text}
+                    {msg.isOwn && (
+                      <div className="flex justify-end mt-1">
+                        <CheckCheck size={13} className="text-sky-500" />
+                      </div>
+                    )}
+                  </div>
+                </div>
+              ))}
+            </div>
+
+            <form onSubmit={handleSendHelpMessage} className="bg-white border-t border-gray-200 px-3 py-2 flex items-center gap-2">
+              <button type="submit" className="w-8 h-8 rounded-full bg-sky-400 text-white flex items-center justify-center hover:bg-sky-500 shadow flex-shrink-0 cursor-pointer">
+                <Send size={14} className="rotate-180" />
+              </button>
+
+              <input
+                type="text"
+                value={chatMessage}
+                onChange={(e) => setChatMessage(e.target.value)}
+                placeholder="اكتب رسالتك... واستخدم @@ للمنشن"
+                className="flex-1 bg-transparent text-xs outline-none text-right py-1 placeholder:text-gray-400"
+              />
+
+              <div className="flex items-center gap-1.5 text-gray-500 flex-shrink-0">
+                <button type="button" className="hover:text-gray-700 p-1 cursor-pointer"><Smile size={16} /></button>
+                <button type="button" className="hover:text-gray-700 p-1 cursor-pointer"><Mic size={16} /></button>
+                <button type="button" className="hover:text-gray-700 p-1 cursor-pointer"><FileText size={16} /></button>
+                <button type="button" className="hover:text-gray-700 p-1 cursor-pointer"><Image size={16} /></button>
+                <button type="button" className="hover:text-gray-700 p-1 cursor-pointer"><Paperclip size={16} /></button>
+              </div>
+            </form>
+
           </div>
         )}
 
+        <button 
+          onClick={() => setIsHelpChatOpen(!isHelpChatOpen)}
+          className="w-14 h-14 rounded-full bg-sky-400 text-white shadow-xl flex items-center justify-center hover:bg-sky-500 transition-colors cursor-pointer"
+        >
+          <MessageCircle size={22} />
+        </button>
+
       </div>
-    </AdminLayout>
+
+    </div>
   )
 }
