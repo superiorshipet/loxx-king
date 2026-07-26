@@ -3,7 +3,8 @@ import { Link, useLocation, useNavigate } from 'react-router-dom'
 import { 
   LayoutDashboard, ShoppingBag, Package, Tags, Gift, Star, 
   MessageSquare, FileText, Bell, ClipboardList, LogOut, 
-  Globe, Moon, Sun, ChevronLeft, ChevronRight, Menu, X, MapPin
+  Globe, Moon, Sun, ChevronLeft, ChevronRight, Menu, X, MapPin,
+  TrendingUp
 } from 'lucide-react'
 import { useApp } from '../../context/AppContext'
 import logoImg from '../../imports/image.png'
@@ -27,6 +28,7 @@ export function AdminLayout({ children }: { children: React.ReactNode }) {
     { nameEn: 'Support Chat', nameAr: 'دردشة الدعم', path: '/admin/chat', icon: MessageSquare },
     { nameEn: 'Invoices', nameAr: 'الفواتير', path: '/admin/invoices', icon: FileText },
     { nameEn: 'Notifications', nameAr: 'الإشعارات', path: '/admin/notifications', icon: Bell },
+    {nameEn: 'Operations Center', nameAr: 'مركز العمليات', path: '/admin/operations', icon: TrendingUp },
     ...(isAdmin ? [{ nameEn: 'Edit Logs', nameAr: 'سجل التعديلات', path: '/admin/logs', icon: ClipboardList }] : []),
   ]
 
@@ -39,29 +41,26 @@ export function AdminLayout({ children }: { children: React.ReactNode }) {
     <div className="flex h-screen bg-muted/20 font-sans" dir={dir}>
       
       {/* الشريط العلوي الثابت (الهيدر) وفيه زرار السلايدر */}
-      <header className="fixed top-0 left-0 right-0 h-16 bg-card border-b border-border flex items-center px-4 justify-between z-30 shadow-sm">
-        <div className="flex items-center gap-4">
-          <button 
-            onClick={() => setIsSidebarOpen(true)}
-            className="w-10 h-10 rounded-xl flex items-center justify-center bg-brand/10 text-brand hover:bg-brand hover:text-[#0E0E11] transition-colors tap-highlight"
-          >
-            <Menu size={20} />
-          </button>
-          <Link to="/admin" className="flex items-center gap-2 tap-highlight">
-            <img src={logoImg} alt="LOXX KING" className="w-9 h-9 rounded-full object-cover bg-black" />
-            <span className="font-display font-black text-xl tracking-wide hidden sm:block">
-              <span className="text-foreground">LOXX</span>
-              <span className="text-brand"> KING</span>
-            </span>
-          </Link>
-        </div>
-        <div className="flex items-center gap-3">
-          <span className="text-sm font-bold text-muted-foreground bg-muted/50 px-4 py-1.5 rounded-full border border-border">
-            {isAdmin ? 'Admin' : 'Store Manager'}
-          </span>
-        </div>
-      </header>
+   <header className="fixed top-0 left-0 right-0 h-16 bg-card border-b border-border flex items-center px-4 justify-between z-30 shadow-sm">
+  <div className="flex items-center gap-4">
+    <button 
+      onClick={() => setIsSidebarOpen(true)}
+      className="w-10 h-10 rounded-xl flex items-center justify-center bg-brand/10 text-brand hover:bg-brand hover:text-[#0E0E11] transition-colors tap-highlight"
+    >
+      <Menu size={20} />
+    </button>
+  </div>
 
+  <Link to="/admin" className="absolute left-1/2 -translate-x-1/2 flex items-center gap-2 tap-highlight">
+    <span className="font-display font-black text-xl tracking-wide hidden sm:block">
+      <span className="text-foreground">LOXX</span>
+      <span className="text-brand"> KING</span>
+    </span>
+  </Link>
+
+  <div className="flex items-center gap-3">
+  </div>
+</header>
       {/* خلفية ضبابية لما السلايدر يفتح */}
       {isSidebarOpen && (
         <div 

@@ -1,6 +1,7 @@
 import { lazy, Suspense } from 'react'
 import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom'
 import { AppProvider, useApp } from './context/AppContext'
+import OperationsCenterPage from './pages/admin/OperationsCenterPage' // (أو عدل المسار حسب مكان حفظك للملف)
 
 // Customer Pages (lazy loaded)
 const HomePage = lazy(() => import('./pages/customer/HomePage'))
@@ -91,6 +92,7 @@ function AppRoutes() {
         <Route path="/admin/invoices" element={<AdminGuard><InvoicesPage /></AdminGuard>} />
         <Route path="/admin/notifications" element={<AdminGuard><AdminNotificationsPage /></AdminGuard>} />
         <Route path="/admin/edit-logs" element={<AdminOnlyGuard><EditLogsPage /></AdminOnlyGuard>} />
+        <Route path="/admin/operations" element={<OperationsCenterPage />} />
 
         {/* Fallback */}
         <Route path="*" element={<Navigate to="/" replace />} />
