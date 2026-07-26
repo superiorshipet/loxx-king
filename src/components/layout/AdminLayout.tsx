@@ -21,7 +21,7 @@ export function AdminLayout({ children }: { children: React.ReactNode }) {
   const adminLinks = [
     { nameEn: 'Dashboard', nameAr: 'لوحة التحكم', path: '/admin', icon: LayoutDashboard },
     { nameEn: 'Orders', nameAr: 'الطلبات', path: '/admin/orders', icon: ShoppingBag },
-    { nameEn: 'Products', nameAr: 'المنتجات', path: '/admin/products', icon: Package },
+    { nameEn: 'Products', nameAr: 'المستودع', path: '/admin/products', icon: Package },
     { nameEn: 'Categories', nameAr: 'الفئات', path: '/admin/categories', icon: Tags },
     { nameEn: 'Offers', nameAr: 'العروض', path: '/admin/offers', icon: Gift },
     { nameEn: 'Reviews', nameAr: 'التقييمات', path: '/admin/reviews', icon: Star },
